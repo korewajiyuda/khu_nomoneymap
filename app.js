@@ -219,6 +219,8 @@ const REPORT_FORM_URL = "";
     detailTipRating: "god",
     reportTab: "modify",
     lastCopiedReportText: "",
+    dataSourceMode: "local", // 'local' | 'sheet' | 'sheet_error'
+    activeSheetRawUrl: "",
     filters: createDefaultFilters(),
     places: [],
     sortedCampusPlaces: [],
@@ -479,10 +481,159 @@ const REPORT_FORM_URL = "";
   };
 
   /**
-   * RFC-4180 호환 CSV 파서
+   * 구글 스프레드시트 실시간 연동 URL 설정 매니저 (SheetConfigStore)
+   * - app.js 상단 GOOGLE_SHEET_CSV_URL 상수가 있으면 최우선 적용
+   * - 없으면 브라우저 ☰ 메뉴에서 연결한 localStorage URL 적용
+   */
+  const SheetConfigStore = {
+    STORAGE_KEY: "geojimap_sheet_url",
+
+    getSavedUrl() {
+      try {
+        return String(localStorage.getItem(this.STORAGE_KEY) || "").trim();
+      } catch (_) {
+        return "";
+      }
+    },
+
+    setSavedUrl(url) {
+      const clean = String(url || "").trim();
+      try {
+        if (clean) {
+          localStorage.setItem(this.STORAGE_KEY, clean);
+        } else {
+          localStorage.removeItem(this.STORAGE_KEY);
+        }
+      } catch (_) {
+        // ignore
+      }
+      return clean;
+    },
+
+    getEffectiveRawUrl() {
+      return GOOGLE_SHEET_CSV_URL.trim() || this.getSavedUrl();
+    },
+  };
+
+  /**
+   * 어떤 형태의 구글 시트 링크든 브라우저 fetch 가능한 실시간 CSV URL 후보 배열로 변환
+   * - 일반 공유 링크: https://docs.google.com/spreadsheets/d/{ID}/edit?gid=0#gid=0
+   * - 웹에 게시 링크: https://docs.google.com/spreadsheets/d/e/{PUB_ID}/pub?output=csv (또는 /pubhtml)
+   */
+  function buildGoogleSheetCsvUrls(rawUrl) {
+    const trimmed = String(rawUrl || "").trim();
+    if (!trimmed) return [];
+
+    const gidMatch = trimmed.match(/[?&#]gid=(\d+)/);
+    const gid = gidMatch ? gidMatch[1] : null;
+
+    // 1) '웹에 게시' URL (/spreadsheets/d/e/2PACX-...)
+    const pubMatch = trimmed.match(
+      /docs\.google\.com\/spreadsheets\/d\/e\/([a-zA-Z0-9-_]+)/
+    );
+    if (pubMatch) {
+      const pubId = pubMatch[1];
+      const basePub = `https://docs.google.com/spreadsheets/d/e/${pubId}/pub?output=csv${
+        gid ? `&gid=${gid}` : "&single=true"
+      }`;
+      return [basePub];
+    }
+
+    // 2) 일반 스프레드시트 공유 URL (/spreadsheets/d/{SPREADSHEET_ID}/...)
+    const docMatch = trimmed.match(
+      /docs\.google\.com\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/
+    );
+    if (docMatch) {
+      const docId = docMatch[1];
+      const gvizUrl = `https://docs.google.com/spreadsheets/d/${docId}/gviz/tq?tqx=out:csv${
+        gid ? `&gid=${gid}` : ""
+      }`;
+      const exportUrl = `https://docs.google.com/spreadsheets/d/${docId}/export?format=csv${
+        gid ? `&gid=${gid}` : ""
+      }`;
+      return [gvizUrl, exportUrl];
+    }
+
+    return [trimmed];
+  }
+
+  /**
+   * 캠퍼스 문자열 정규화 ('서울캠', '국제캠' 등 한글 입력 완벽 호환)
+   */
+  function normalizeCampusKey(rawCampus) {
+    const s = String(rawCampus || "")
+      .trim()
+      .toLowerCase();
+    if (
+      s === "global" ||
+      s.includes("국제") ||
+      s.includes("수원") ||
+      s.includes("영통") ||
+      s.includes("서천")
+    ) {
+      return "global";
+    }
+    return "seoul";
+  }
+
+  /**
+   * 네이버 플레이스/지도 링크 정규화
+   * - 구형 m.map.naver.com/search2/search.naver 링크(검색 오류 발생)를 최신 직결 URL로 자동 교정
+   * - m.place.naver.com/restaurant/{ID} -> PC·모바일 겸용 https://map.naver.com/p/entry/place/{ID} 변환
+   */
+  const CAFETERIA_NAVER_PLACE_URL = {
+    "1": "https://map.naver.com/p/entry/place/18864737", // 경희대학교 청운관
+    "2": "https://map.naver.com/p/entry/place/1150468604", // 경희대학교 푸른솔문화관
+    "29": "https://map.naver.com/p/entry/place/19294187", // 경희대학교 국제캠퍼스 학생회관
+    "30": "https://map.naver.com/p/entry/place/38432018", // 경희대학교 국제캠퍼스 제2기숙사
+  };
+
+  function buildModernNaverSearchUrl(place) {
+    const cleanName = String(place?.name || "")
+      .replace(/\s*\([^)]*\)\s*/g, " ")
+      .trim();
+    const areaPrefix =
+      place?.campus === "global"
+        ? "영통"
+        : String(place?.zone || "").includes("외대")
+        ? "외대"
+        : "회기";
+    const query = cleanName.includes(areaPrefix) || /경희대|외대|회기|영통/.test(cleanName)
+      ? cleanName
+      : `${areaPrefix} ${cleanName}`;
+    return `https://map.naver.com/p/search/${encodeURIComponent(query)}`;
+  }
+
+  function normalizeExternalPlaceLink(rawLink, place) {
+    const trimmed = String(rawLink || "").trim();
+    if (!trimmed) {
+      return buildModernNaverSearchUrl(place);
+    }
+
+    // 모바일/구형 플레이스 URL에서 고유 숫자 ID 추출 시 최신 직결 엔트리로 통일
+    const placeIdMatch = trimmed.match(
+      /(?:place\.naver\.com\/(?:restaurant|place|cafe)\/|map\.naver\.com\/(?:v5|p)\/(?:entry\/place|search\/[^/]+\/place)\/)(\d+)/
+    );
+    if (placeIdMatch) {
+      return `https://map.naver.com/p/entry/place/${placeIdMatch[1]}`;
+    }
+
+    // 구형 깨지는 search2/search.naver 링크는 최신 v5 지도 링크로 즉시 업그레이드
+    if (/m\.map\.naver\.com\/search2\/search\.naver/i.test(trimmed)) {
+      return buildModernNaverSearchUrl(place);
+    }
+
+    return trimmed;
+  }
+
+  /**
+   * RFC-4180 호환 CSV 파서 (비공개 시트 HTML 응답 방어 및 #주석행 제외)
    */
   function parseCSV(csvText) {
     const text = String(csvText || "").replace(/^\uFEFF/, "");
+    if (/^\s*<!doctype html|^\s*<html/i.test(text)) {
+      return [];
+    }
     const rows = [];
     let currentRow = [];
     let currentField = "";
@@ -537,6 +688,9 @@ const REPORT_FORM_URL = "";
     if (nonEmptyRows.length === 0) return [];
 
     const headers = nonEmptyRows[0].map((h) => h.trim());
+    if (!headers.includes("name") && !headers.includes("id")) {
+      return [];
+    }
     const objects = [];
 
     for (let rIdx = 1; rIdx < nonEmptyRows.length; rIdx++) {
@@ -546,6 +700,9 @@ const REPORT_FORM_URL = "";
         const key = headers[cIdx];
         if (!key) continue;
         item[key] = rawRow[cIdx] !== undefined ? rawRow[cIdx].trim() : "";
+      }
+      if (String(item.id || "").startsWith("#")) {
+        continue;
       }
       if (item.name || item.id) {
         objects.push(item);
@@ -807,9 +964,10 @@ const REPORT_FORM_URL = "";
   }
 
   function normalizePlace(raw, idx) {
-    const campus = String(raw.campus || "seoul").trim().toLowerCase();
+    const campus = normalizeCampusKey(raw.campus);
     const coords = resolvePlaceCoordinates({ ...raw, campus }, idx);
-    const numericPrice = Number(String(raw.min_price || "").replace(/,/g, ""));
+    const cleanedPriceStr = String(raw.min_price || "").replace(/[^0-9]/g, "");
+    const numericPrice = cleanedPriceStr ? Number(cleanedPriceStr) : NaN;
     const minPrice =
       Number.isFinite(numericPrice) && numericPrice > 0 ? numericPrice : null;
 
@@ -837,10 +995,16 @@ const REPORT_FORM_URL = "";
       .join(" ")
       .toLowerCase();
 
+    const normalizedLink = normalizeExternalPlaceLink(raw.link, {
+      ...raw,
+      campus,
+    });
+
     const place = {
       ...raw,
       id: String(raw.id || idx + 1),
       campus,
+      link: normalizedLink,
       minPrice,
       tagsList,
       lat: coords.lat,
@@ -862,24 +1026,47 @@ const REPORT_FORM_URL = "";
   }
 
   async function loadPlacesData() {
-    const sheetUrl = GOOGLE_SHEET_CSV_URL.trim();
+    const rawSheetUrl = SheetConfigStore.getEffectiveRawUrl();
+    state.activeSheetRawUrl = rawSheetUrl;
 
     const fetchCsvText = async (url) => {
-      const res = await fetch(url, { cache: "no-cache" });
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) {
         throw new Error(`CSV 로드 실패 (${res.status}): ${url}`);
       }
       return res.text();
     };
 
-    if (!sheetUrl) {
+    if (!rawSheetUrl) {
       const localText = await fetchCsvText(LOCAL_CSV_PATH);
       const localRows = parseCSV(localText);
+      state.dataSourceMode = "local";
       return localRows.map((row, idx) => normalizePlace(row, idx));
     }
 
+    const candidateUrls = buildGoogleSheetCsvUrls(rawSheetUrl);
+
+    const fetchSheetRowsWithFallback = async () => {
+      let lastErr = null;
+      for (const baseUrl of candidateUrls) {
+        try {
+          const sep = baseUrl.includes("?") ? "&" : "?";
+          const bustUrl = `${baseUrl}${sep}_ts=${Date.now()}`;
+          const csvText = await fetchCsvText(bustUrl);
+          const parsed = parseCSV(csvText);
+          if (parsed.length > 0) {
+            return parsed;
+          }
+          lastErr = new Error("시트 CSV 파싱 결과가 비어있거나 권한이 비공개입니다.");
+        } catch (err) {
+          lastErr = err;
+        }
+      }
+      throw lastErr || new Error("구글 시트 데이터를 불러오지 못했습니다.");
+    };
+
     const [sheetResult, localResult] = await Promise.allSettled([
-      fetchCsvText(sheetUrl),
+      fetchSheetRowsWithFallback(),
       fetchCsvText(LOCAL_CSV_PATH),
     ]);
 
@@ -891,38 +1078,81 @@ const REPORT_FORM_URL = "";
         "[거지맵] 구글시트 로드 실패 -> 로컬 data.csv로 폴백합니다.",
         sheetResult.reason
       );
+      state.dataSourceMode = "sheet_error";
       return localRows.map((row, idx) => normalizePlace(row, idx));
     }
 
-    const sheetRows = parseCSV(sheetResult.value);
-    if (sheetRows.length === 0) {
-      return localRows.map((row, idx) => normalizePlace(row, idx));
-    }
+    const sheetRows = sheetResult.value;
+    state.dataSourceMode = "sheet";
 
     const localById = new Map();
     const localByCampusName = new Map();
     for (const lRow of localRows) {
       if (lRow.id) localById.set(String(lRow.id), lRow);
       if (lRow.campus && lRow.name) {
-        localByCampusName.set(`${lRow.campus}::${lRow.name}`, lRow);
+        localByCampusName.set(
+          `${normalizeCampusKey(lRow.campus)}::${lRow.name}`,
+          lRow
+        );
       }
     }
 
+    // 시트에서 의도적으로 비운 셀(브레이크타임 삭제 등)은 시트 값을 그대로 반영하고,
+    // 좌표(lat/lng)와 링크(link)만 빈칸일 때 기존 로컬 값을 보조로 사용합니다.
+    const FALLBACK_ONLY_WHEN_EMPTY = new Set(["lat", "lng", "link"]);
+
     const mergedRows = sheetRows.map((sRow) => {
+      const normCampus = normalizeCampusKey(sRow.campus);
       const fallback =
         (sRow.id && localById.get(String(sRow.id))) ||
-        localByCampusName.get(`${sRow.campus}::${sRow.name}`) ||
+        localByCampusName.get(`${normCampus}::${sRow.name}`) ||
         {};
-      const merged = { ...fallback };
-      for (const [k, v] of Object.entries(sRow)) {
-        if (v !== undefined && String(v).trim() !== "") {
-          merged[k] = v;
+      const merged = { ...fallback, ...sRow };
+      for (const key of FALLBACK_ONLY_WHEN_EMPTY) {
+        if (
+          (sRow[key] === undefined || String(sRow[key]).trim() === "") &&
+          fallback[key]
+        ) {
+          merged[key] = fallback[key];
         }
       }
       return merged;
     });
 
     return mergedRows.map((row, idx) => normalizePlace(row, idx));
+  }
+
+  async function reloadPlacesFromSource({ silent = false } = {}) {
+    try {
+      const nextPlaces = await loadPlacesData();
+      state.places = nextPlaces;
+      populateReportPlaceDatalist();
+      refreshCampusView({ rebuildMarkers: true, resetScroll: false });
+      updateMenuModalStats();
+
+      if (!silent) {
+        if (state.dataSourceMode === "sheet") {
+          showToast(
+            `구글 시트에서 최신 맛집 ${nextPlaces.length}곳을 반영했어요! 📗`,
+            2600
+          );
+        } else if (state.dataSourceMode === "sheet_error") {
+          showToast(
+            "시트가 비공개이거나 주소가 잘못되어 기본 데이터를 유지합니다. 공유 권한(뷰어)을 확인해주세요!",
+            3400
+          );
+        } else {
+          showToast("내장 기본 데이터(data.csv)로 불러왔어요.");
+        }
+      }
+      return state.dataSourceMode;
+    } catch (err) {
+      console.error("[거지맵] 시트 동기화 실패:", err);
+      if (!silent) {
+        showToast("데이터 새로고침 중 오류가 발생했습니다.");
+      }
+      return "error";
+    }
   }
 
   /* ==========================================================================
@@ -1487,7 +1717,12 @@ const REPORT_FORM_URL = "";
   function getSheetMetrics() {
     const stageEl = document.getElementById("mapStage");
     const sheetEl = document.getElementById("bottomSheet");
-    const headerEl = state.isDetailOpen
+    const isFairyNav = Boolean(
+      window.FairyNavEngine && window.FairyNavEngine.isActive()
+    );
+    const headerEl = isFairyNav
+      ? document.getElementById("fairyNavDragHeader")
+      : state.isDetailOpen
       ? document.getElementById("detailDragHeader")
       : document.getElementById("sheetHeader");
 
@@ -1497,12 +1732,12 @@ const REPORT_FORM_URL = "";
     const headerH =
       headerEl && headerEl.offsetHeight > 0
         ? headerEl.offsetHeight
-        : state.isDetailOpen
+        : isFairyNav || state.isDetailOpen
         ? 62
         : 88;
 
-    const collapsedVisible = state.isDetailOpen ? 64 : 88;
-    const halfRatio = state.isDetailOpen ? 0.54 : 0.46;
+    const collapsedVisible = isFairyNav || state.isDetailOpen ? 64 : 88;
+    const halfRatio = isFairyNav ? 0.50 : state.isDetailOpen ? 0.54 : 0.46;
     const halfVisible = Math.min(
       sheetH - 56,
       Math.max(220, Math.round(viewportH * halfRatio))
@@ -1549,7 +1784,11 @@ const REPORT_FORM_URL = "";
     sheetEl.style.setProperty("--sheet-translate-y", `${target.translateY}px`);
 
     const contentH = Math.max(0, target.visibleH - metrics.headerH);
-    if (listScrollEl && !state.isDetailOpen) {
+    const fairyNavScrollEl = document.getElementById("fairyNavBody");
+    const isFairyNav = Boolean(
+      window.FairyNavEngine && window.FairyNavEngine.isActive()
+    );
+    if (listScrollEl && !state.isDetailOpen && !isFairyNav) {
       listScrollEl.style.setProperty("--sheet-list-height", `${contentH}px`);
     }
     if (detailScrollEl && state.isDetailOpen) {
@@ -1558,17 +1797,31 @@ const REPORT_FORM_URL = "";
         `${contentH}px`
       );
     }
+    if (fairyNavScrollEl && isFairyNav) {
+      fairyNavScrollEl.style.setProperty(
+        "--fairy-nav-scroll-height",
+        `${contentH}px`
+      );
+    }
 
     if (detailExpandBtn) {
       detailExpandBtn.textContent =
         snapKey === "full" ? "지도와 함께" : "크게 보기";
     }
+    const navExpandBtn = document.getElementById("fairyNavExpandBtn");
+    if (navExpandBtn) {
+      navExpandBtn.textContent =
+        snapKey === "full" ? "지도와 함께" : "크게 보기";
+    }
 
+    const helperBtn = document.getElementById("brokeFairyHelperBtn");
     if (stageEl && controlsEl) {
       if (snapKey === "full") {
         controlsEl.classList.add("is-hidden");
+        if (helperBtn) helperBtn.classList.add("is-hidden");
       } else {
         controlsEl.classList.remove("is-hidden");
+        if (helperBtn) helperBtn.classList.remove("is-hidden");
         stageEl.style.setProperty(
           "--controls-bottom",
           `${target.visibleH + 12}px`
@@ -1673,7 +1926,7 @@ const REPORT_FORM_URL = "";
         state.drag.velocityY = 0;
         state.drag.startTranslateY = state.drag.currentTranslateY;
         state.drag.startedOnGrabber = Boolean(
-          e.target.closest("#sheetGrabber, #detailGrabber")
+          e.target.closest("#sheetGrabber, #detailGrabber, #fairyNavGrabber")
         );
 
         try {
@@ -1778,6 +2031,7 @@ const REPORT_FORM_URL = "";
 
     attachDragHandlers(listHeaderEl);
     attachDragHandlers(detailHeaderEl);
+    attachDragHandlers(document.getElementById("fairyNavDragHeader"));
   }
 
   /* ==========================================================================
@@ -2267,10 +2521,10 @@ const REPORT_FORM_URL = "";
     )}`;
 
     const addressText = place.address || "상세 주소 현장 확인";
-    const naverSearchFallbackUrl = `https://m.map.naver.com/search2/search.naver?query=${encodeURIComponent(
-      `경희대 ${place.name}`
-    )}`;
-    const primaryLinkUrl = String(place.link || "").trim() || naverSearchFallbackUrl;
+    const naverDirectFallbackUrl =
+      CAFETERIA_NAVER_PLACE_URL[String(place.id)] ||
+      buildModernNaverSearchUrl(place);
+    const primaryLinkUrl = normalizeExternalPlaceLink(place.link, place);
     const kakaoRouteUrl = `https://map.kakao.com/link/to/${encodeURIComponent(
       place.name
     )},${place.lat},${place.lng}`;
@@ -2290,7 +2544,7 @@ const REPORT_FORM_URL = "";
           </a>
           <div class="dloc-ext-row-2">
             <a
-              href="${escapeHtml(naverSearchFallbackUrl)}"
+              href="${escapeHtml(naverDirectFallbackUrl)}"
               target="_blank"
               rel="noopener noreferrer"
               class="ext-link-btn is-naver"
@@ -2356,6 +2610,16 @@ const REPORT_FORM_URL = "";
           </div>
 
           <div class="dhero-actions">
+            <button
+              type="button"
+              class="dhero-action-btn is-fairy-go"
+              id="detailHeroNavBtn"
+              data-action="start-fairy-nav"
+              title="요정 실시간 도보 길안내"
+            >
+              <span aria-hidden="true">🧚</span>
+              <span>길안내</span>
+            </button>
             <button
               type="button"
               class="dhero-action-btn${isBookmarked ? " is-bookmarked" : ""}"
@@ -2431,12 +2695,22 @@ const REPORT_FORM_URL = "";
         </dl>
       </section>
 
-      <!-- [블록 4] 위치 & 원터치 외부 지도·메뉴판 바로가기 바 -->
+      <!-- [블록 4] 위치 & 요정 실시간 도보 길안내 + 외부 지도·메뉴판 바로가기 바 -->
       <section class="detail-section-card" aria-label="위치 및 길찾기">
         <div class="dsec-title-row">
-          <h3 class="dsec-heading">📍 위치 &amp; 길찾기 바로가기</h3>
+          <h3 class="dsec-heading">📍 위치 &amp; 요정 도보 길안내</h3>
           <span class="dloc-walk-pill">🚶 ${escapeHtml(walkSummaryText)}</span>
         </div>
+
+        ${
+          window.FairyNavEngine
+            ? window.FairyNavEngine.buildDetailFairyNavigationHubHtml(
+                place,
+                biz,
+                walkSummaryText
+              )
+            : ""
+        }
 
         <div class="dloc-addr-row">
           <span class="dloc-addr-text" id="detailAddrText">${escapeHtml(
@@ -2579,6 +2853,14 @@ const REPORT_FORM_URL = "";
       return null;
     }
 
+    if (
+      source !== "navigation" &&
+      window.FairyNavEngine &&
+      window.FairyNavEngine.isActive()
+    ) {
+      window.FairyNavEngine.stopFairyNavigation({ reopenDetail: false });
+    }
+
     let targetPlace = null;
     const foundInSorted = state.sortedCampusPlaces.find(
       (entry) => String(entry.place.id) === idStr
@@ -2606,7 +2888,6 @@ const REPORT_FORM_URL = "";
     }
 
     state.selectedPlaceId = idStr;
-    state.isDetailOpen = true;
     state.detailTipRating = "god";
 
     for (const [mId, record] of state.markerById.entries()) {
@@ -2628,6 +2909,13 @@ const REPORT_FORM_URL = "";
       });
     }
 
+    if (source === "navigation") {
+      state.isDetailOpen = false;
+      syncUrlQueryWithPlace(idStr);
+      return targetPlace;
+    }
+
+    state.isDetailOpen = true;
     const sheetEl = document.getElementById("bottomSheet");
     const detailEl = document.getElementById("detailSheet");
     if (sheetEl) sheetEl.classList.add("is-detail-mode");
@@ -2678,11 +2966,22 @@ const REPORT_FORM_URL = "";
 
     return `
       <div class="card-line-2">
-        <span class="biz-status-inline state-${escapeHtml(biz.state)}">
-          <span aria-hidden="true">${icon}</span>
-          <span>${escapeHtml(text)}</span>
-        </span>
-        ${lastOrderHtml}
+        <div class="card-line-2-left">
+          <span class="biz-status-inline state-${escapeHtml(biz.state)}">
+            <span aria-hidden="true">${icon}</span>
+            <span>${escapeHtml(text)}</span>
+          </span>
+          ${lastOrderHtml}
+        </div>
+        <button
+          type="button"
+          class="card-fairy-nav-btn"
+          data-card-nav-id="${escapeHtml(place.id)}"
+          aria-label="${escapeHtml(place.name)} 요정 도보 길안내"
+          title="실시간 도보 길안내"
+        >
+          🧚 길안내
+        </button>
       </div>
     `;
   }
@@ -2883,6 +3182,9 @@ const REPORT_FORM_URL = "";
     }
 
     syncRadiusCircles();
+    if (window.FairyNavEngine) {
+      window.FairyNavEngine.syncCampusAnchorFairy();
+    }
     if (options.rebuildMarkers) {
       renderMapMarkers(decorated);
     }
@@ -2914,6 +3216,9 @@ const REPORT_FORM_URL = "";
   function switchCampus(campusKey, options = { animate: true }) {
     if (!CAMPUS_ANCHORS[campusKey]) return;
 
+    if (window.FairyNavEngine && window.FairyNavEngine.isActive()) {
+      window.FairyNavEngine.stopFairyNavigation({ reopenDetail: false });
+    }
     closeDetailView({ clearSelection: true, updateUrl: true });
     state.currentCampus = campusKey;
     state.filters.zone = "all";
@@ -3016,6 +3321,41 @@ const REPORT_FORM_URL = "";
       } else {
         elMyReports.hidden = true;
       }
+    }
+
+    // 📗 구글 시트 실시간 동기화 UI 상태 갱신
+    const statusBadge = document.getElementById("sheetSyncStatusBadge");
+    const urlInput = document.getElementById("sheetUrlInput");
+    const clearBtn = document.getElementById("btnClearSheetUrl");
+    const codeBar = document.getElementById("sheetCodeHelperBar");
+    const effectiveUrl = SheetConfigStore.getEffectiveRawUrl();
+    const hasHardcoded = Boolean(GOOGLE_SHEET_CSV_URL.trim());
+
+    if (statusBadge) {
+      if (state.dataSourceMode === "sheet") {
+        statusBadge.textContent = "🟢 시트 실시간 연동 중";
+        statusBadge.classList.add("is-live");
+      } else if (state.dataSourceMode === "sheet_error") {
+        statusBadge.textContent = "⚠️ 시트 권한 확인 필요";
+        statusBadge.classList.remove("is-live");
+      } else {
+        statusBadge.textContent = "내장 data.csv";
+        statusBadge.classList.remove("is-live");
+      }
+    }
+
+    if (urlInput) {
+      urlInput.value = effectiveUrl;
+      urlInput.readOnly = hasHardcoded;
+      urlInput.title = hasHardcoded
+        ? "app.js 상단 GOOGLE_SHEET_CSV_URL에 영구 연결되어 있습니다."
+        : "";
+    }
+    if (clearBtn) {
+      clearBtn.hidden = hasHardcoded || !SheetConfigStore.getSavedUrl();
+    }
+    if (codeBar) {
+      codeBar.hidden = !effectiveUrl;
     }
   }
 
@@ -3339,9 +3679,7 @@ const REPORT_FORM_URL = "";
     if (/혼밥|1인/.test(perks)) autoTags.push("혼밥가능");
 
     const nextId = state.places.length + ReportStore.list().length + 1;
-    const searchLink = `https://m.map.naver.com/search2/search.naver?query=${encodeURIComponent(
-      `${campus === "global" ? "영통" : "회기"} ${name}`
-    )}`;
+    const searchLink = buildModernNaverSearchUrl({ campus, zone, name });
 
     const csvColumns = [
       nextId,
@@ -3506,15 +3844,11 @@ const REPORT_FORM_URL = "";
       maxZoom: 19,
     });
 
-    L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-      {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OSM</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
-        subdomains: "abcd",
-        maxZoom: 20,
-      }
-    ).addTo(map);
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map);
 
     state.map = map;
     state.radiusLayer = L.layerGroup().addTo(map);
@@ -3759,6 +4093,55 @@ const REPORT_FORM_URL = "";
       menuOpenSurvivalBtn.addEventListener("click", openFilterModal);
     }
 
+    // 📗 구글 시트 실시간 연동 버튼 이벤트
+    const btnSyncSheetNow = document.getElementById("btnSyncSheetNow");
+    const btnSaveSheetUrl = document.getElementById("btnSaveSheetUrl");
+    const btnClearSheetUrl = document.getElementById("btnClearSheetUrl");
+    const btnCopyAppJsSheetCode = document.getElementById(
+      "btnCopyAppJsSheetCode"
+    );
+    const sheetUrlInput = document.getElementById("sheetUrlInput");
+
+    if (btnSyncSheetNow) {
+      btnSyncSheetNow.addEventListener("click", async () => {
+        await reloadPlacesFromSource({ silent: false });
+      });
+    }
+    if (btnSaveSheetUrl && sheetUrlInput) {
+      btnSaveSheetUrl.addEventListener("click", async () => {
+        if (GOOGLE_SHEET_CSV_URL.trim()) {
+          await reloadPlacesFromSource({ silent: false });
+          return;
+        }
+        const val = sheetUrlInput.value.trim();
+        if (!val) {
+          showToast("구글 스프레드시트 링크를 먼저 붙여넣어 주세요!");
+          sheetUrlInput.focus();
+          return;
+        }
+        SheetConfigStore.setSavedUrl(val);
+        await reloadPlacesFromSource({ silent: false });
+      });
+    }
+    if (btnClearSheetUrl) {
+      btnClearSheetUrl.addEventListener("click", async () => {
+        SheetConfigStore.setSavedUrl("");
+        if (sheetUrlInput) sheetUrlInput.value = "";
+        await reloadPlacesFromSource({ silent: true });
+        showToast("구글 시트 연결을 해제하고 기본 데이터로 복원했어요.");
+      });
+    }
+    if (btnCopyAppJsSheetCode) {
+      btnCopyAppJsSheetCode.addEventListener("click", async () => {
+        const raw = SheetConfigStore.getEffectiveRawUrl();
+        const csvUrls = buildGoogleSheetCsvUrls(raw);
+        const targetCsvUrl = csvUrls[0] || raw;
+        const snippet = `const GOOGLE_SHEET_CSV_URL = "${targetCsvUrl}";`;
+        await copyTextToClipboard(snippet);
+        showToast("app.js 1번 줄 코드가 복사되었어요! 📋");
+      });
+    }
+
     // Step 4: 가격 수정 · 신규 맛집 제보 모달 (#reportModal) 이벤트
     const reportModal = document.getElementById("reportModal");
     const closeReportModalBtn = document.getElementById("closeReportModalBtn");
@@ -3893,6 +4276,13 @@ const REPORT_FORM_URL = "";
 
         if (action === "report-price") {
           openReportModal({ tab: "modify", place: currentPlace });
+          return;
+        }
+
+        if (action === "start-fairy-nav") {
+          if (window.FairyNavEngine) {
+            window.FairyNavEngine.startFairyNavigation(currentPlace);
+          }
           return;
         }
 
@@ -4147,6 +4537,15 @@ const REPORT_FORM_URL = "";
 
     if (placeListEl) {
       placeListEl.addEventListener("click", (e) => {
+        const navQuickBtn = e.target.closest("[data-card-nav-id]");
+        if (navQuickBtn) {
+          e.stopPropagation();
+          const navPlaceId = navQuickBtn.getAttribute("data-card-nav-id");
+          if (navPlaceId && window.FairyNavEngine) {
+            window.FairyNavEngine.startFairyNavigation(navPlaceId);
+          }
+          return;
+        }
         const cardEl = e.target.closest(".place-card");
         if (!cardEl) return;
         const placeId = cardEl.getAttribute("data-place-id");
@@ -4155,6 +4554,7 @@ const REPORT_FORM_URL = "";
 
       placeListEl.addEventListener("keydown", (e) => {
         if (e.key === "Enter" || e.key === " ") {
+          if (e.target.closest("[data-card-nav-id]")) return;
           const cardEl = e.target.closest(".place-card");
           if (!cardEl) return;
           e.preventDefault();
@@ -4164,13 +4564,16 @@ const REPORT_FORM_URL = "";
       });
     }
 
-    // ESC 키로 모달/팝오버/상세시트 닫기
+    // ESC 키로 모달/팝오버/길안내/상세시트 닫기
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         closeVisitTimePopover();
         closeFilterModal();
         closeMenuModal();
         closeReportModal();
+        if (window.FairyNavEngine && window.FairyNavEngine.isActive()) {
+          window.FairyNavEngine.stopFairyNavigation({ reopenDetail: true });
+        }
       }
     });
   }
@@ -4180,6 +4583,9 @@ const REPORT_FORM_URL = "";
     buildFilterModalStaticDom();
     initBottomSheetDrag();
     bindEvents();
+    if (window.FairyNavEngine) {
+      window.FairyNavEngine.init();
+    }
     applySheetLayout("half");
 
     try {

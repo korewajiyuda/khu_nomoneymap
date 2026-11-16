@@ -267,6 +267,11 @@ body {
   font-family: var(--font-sans);
 }
 
+/* OpenStreetMap 공식 타일 파스텔 톤 보정 (컬러 가격 캡슐 핀 가독성 극대화) */
+.map-canvas .leaflet-tile-pane {
+  filter: saturate(0.62) brightness(1.03) contrast(0.96);
+}
+
 /* 지도 상단 플로팅 필터 존: 배경 투명 처리로 지도를 가리지 않음 */
 .floating-filter-zone {
   position: absolute;
@@ -2917,6 +2922,164 @@ body {
   overflow-y: auto;
 }
 
+/* 📗 구글 시트 실시간 자동 동기화 섹션 (#menuModal 내부) */
+.menu-sheet-sync-section {
+  padding: 12px 13px;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #F0FDF4 0%, #FFFFFF 100%);
+  border: 1px solid #BBF7D0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mss-title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mss-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  background-color: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+}
+
+.mss-status-badge.is-live {
+  background-color: #ECFDF5;
+  color: #047857;
+  border-color: #6EE7B7;
+}
+
+.mss-refresh-btn {
+  appearance: none;
+  height: 28px;
+  padding: 0 9px;
+  border-radius: 8px;
+  border: 1px solid #86EFAC;
+  background-color: #FFFFFF;
+  color: #047857;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, transform 0.12s ease;
+}
+
+.mss-refresh-btn:hover {
+  background-color: #DCFCE7;
+}
+
+.mss-refresh-btn:active {
+  transform: scale(0.96);
+}
+
+.mss-desc {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.mss-desc code {
+  font-size: 10.5px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background-color: rgba(5, 150, 105, 0.09);
+  color: #065F46;
+}
+
+.mss-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mss-url-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid #CBD5E1;
+  background-color: #FFFFFF;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.mss-url-input:focus {
+  border-color: #059669;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.14);
+}
+
+.mss-save-btn {
+  appearance: none;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: none;
+  background-color: #059669;
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mss-clear-btn {
+  appearance: none;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid #E2E8F0;
+  background-color: #FFFFFF;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.mss-code-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px dashed #BBF7D0;
+}
+
+.mss-code-hint {
+  font-size: 11px;
+  font-weight: 600;
+  color: #065F46;
+}
+
+.mss-copy-code-btn {
+  appearance: none;
+  padding: 4px 8px;
+  border-radius: 7px;
+  border: 1px solid #059669;
+  background-color: #FFFFFF;
+  color: #047857;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 @media (max-width: 374px) {
   .dhero-name {
     font-size: 18px;
@@ -2933,4 +3096,1168 @@ body {
     font-size: 11px;
     padding: 0 5px;
   }
+}
+
+/* ==========================================================================
+   Step 5: 3D 요정 마스코트(텅 빈 지갑 요정 & 길안내 요정단) + 실시간 도보 길안내 UI
+   ========================================================================== */
+
+@keyframes fairyGentleBob {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes fairyHopBounce {
+  0% {
+    transform: scale(1) translateY(0);
+  }
+  30% {
+    transform: scale(1.14, 0.9) translateY(-8px) rotate(-4deg);
+  }
+  60% {
+    transform: scale(0.95, 1.06) translateY(0) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes fairyDashFlow {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+@keyframes fairyPulseRing {
+  0% {
+    transform: translate(-50%, -50%) scale(0.65);
+    opacity: 0.75;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.55);
+    opacity: 0;
+  }
+}
+
+.is-fairy-hopping {
+  animation: fairyHopBounce 0.62s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+/* 1) 상단 브랜드 헤더 — 지갑 벌리고 놀란 요정 배지 */
+.brand-emoji.has-fairy {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #FFF7ED 0%, #FEE2E2 100%);
+  border: 1px solid rgba(234, 88, 12, 0.25);
+  overflow: visible;
+  position: relative;
+}
+
+.brand-fairy-img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  transform: translateY(-1px);
+  filter: drop-shadow(0 2px 4px rgba(185, 28, 28, 0.18));
+}
+
+/* 2) 검색창 삼총사 요정 아이콘 & 빈 상태 잠자는 요정 */
+.search-fairy-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(24, 28, 46, 0.12));
+}
+
+.empty-fairy-img {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  margin: 0 auto 6px;
+  display: block;
+  animation: fairyGentleBob 3s ease-in-out infinite;
+  filter: drop-shadow(0 6px 12px rgba(24, 28, 46, 0.12));
+}
+
+/* 맞춤필터 모달 상단 지갑 요정 히어로 */
+.modal-fairy-hero {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF2F2 100%);
+  border: 1px solid #FED7AA;
+}
+
+.mfh-broke-img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 3px 6px rgba(185, 28, 28, 0.16));
+}
+
+.mfh-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mfh-copy strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: #9A3412;
+  letter-spacing: -0.02em;
+}
+
+.mfh-copy span {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--text-secondary);
+}
+
+/* 3) 좌하단 '지갑 벌리고 놀란 요정' 플로팅 도우미 버튼 */
+.broke-fairy-float-btn {
+  position: absolute;
+  left: 10px;
+  bottom: var(--controls-bottom, 360px);
+  z-index: 820;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px 5px 5px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(234, 88, 12, 0.35);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px rgba(185, 28, 28, 0.18), 0 1px 4px rgba(24, 28, 46, 0.08);
+  cursor: pointer;
+  transition: bottom 0.28s cubic-bezier(0.22, 1, 0.36, 1), transform 0.16s ease, opacity 0.2s ease;
+  font-family: inherit;
+}
+
+.broke-fairy-float-btn:hover {
+  transform: translateY(-2px);
+}
+
+.broke-fairy-float-btn:active {
+  transform: scale(0.96);
+}
+
+.broke-fairy-float-btn.is-hidden,
+.broke-fairy-float-btn.is-nav-hidden,
+.floating-filter-zone.is-nav-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bff-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+  animation: fairyGentleBob 2.8s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(185, 28, 28, 0.2));
+}
+
+.bff-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.18;
+  text-align: left;
+}
+
+.bff-bubble strong {
+  font-size: 11px;
+  font-weight: 800;
+  color: #B91C1C;
+  letter-spacing: -0.02em;
+}
+
+.bff-bubble span {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* 4) 목록 카드 내 1-Tap [🧚 길안내] 미니 버튼 */
+.card-line-2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.card-line-2-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.card-fairy-nav-btn {
+  appearance: none;
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid #FED7AA;
+  background: linear-gradient(135deg, #FFFBEB 0%, #FFF7ED 100%);
+  color: #C2410C;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: background-color 0.15s ease, transform 0.12s ease, border-color 0.15s ease;
+}
+
+.card-fairy-nav-btn:hover {
+  border-color: #FB923C;
+  background: #FFEDD5;
+}
+
+.card-fairy-nav-btn:active {
+  transform: scale(0.95);
+}
+
+/* 5) 지도 기준점 손인사 요정 마커 (fairy-wave.webp) */
+.fairy-anchor-marker-wrap {
+  background: transparent;
+  border: none;
+}
+
+.fairy-anchor-pin {
+  position: relative;
+  width: max-content;
+  max-width: none !important;
+  transform: translate(-50%, -82%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.fairy-anchor-pulse {
+  position: absolute;
+  left: 50%;
+  top: 56%;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.38) 0%, rgba(234, 88, 12, 0.08) 70%);
+  animation: fairyPulseRing 2.4s ease-out infinite;
+  pointer-events: none;
+}
+
+.fairy-anchor-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+  animation: fairyGentleBob 2.6s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(24, 28, 46, 0.22));
+}
+
+.fairy-anchor-badge {
+  margin-top: -3px;
+  position: relative;
+  z-index: 3;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(24, 28, 46, 0.88);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+/* 6) 식당 상세 시트 내 요정 지갑 브리핑 & 길안내 CTA 허브 */
+.detail-fairy-sleep-alert {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  margin-bottom: 9px;
+  border-radius: 12px;
+  background-color: #F8FAFC;
+  border: 1px solid #CBD5E1;
+}
+
+.df-sleep-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.df-sleep-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.df-sleep-txt strong {
+  font-size: 12px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.df-sleep-txt span {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.detail-fairy-nav-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.df-wallet-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #FFFBEB 0%, #FEF2F2 100%);
+  border: 1px solid #FED7AA;
+}
+
+.df-broke-img {
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 3px 6px rgba(185, 28, 28, 0.16));
+}
+
+.df-wallet-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.df-wallet-kicker {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #B91C1C;
+}
+
+.df-wallet-desc {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.38;
+  color: var(--text-primary);
+}
+
+.fairy-route-cta-btn {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: none;
+  background: var(--accent-gradient);
+  color: #FFFFFF;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(185, 28, 28, 0.26);
+  transition: transform 0.14s ease, box-shadow 0.16s ease;
+  text-align: left;
+}
+
+.fairy-route-cta-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(185, 28, 28, 0.32);
+}
+
+.fairy-route-cta-btn:active {
+  transform: scale(0.985);
+}
+
+.frc-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.frc-fly-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 11px;
+  padding: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.14);
+}
+
+.frc-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.frc-text-col strong {
+  font-size: 13.5px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+}
+
+.frc-text-col span {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.frc-go-pill {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* 7) 상단 Turn-by-Turn 실시간 길안내 HUD 배너 (#mapTurnByTurnHud) */
+.map-turn-by-turn-hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 1250;
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(24, 28, 46, 0.96) 0%, rgba(30, 41, 59, 0.95) 100%);
+  color: #FFFFFF;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.map-turn-by-turn-hud[hidden] {
+  display: none !important;
+}
+
+.tbt-hud-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 11px;
+}
+
+.tbt-turn-icon-box {
+  width: 50px;
+  min-height: 50px;
+  border-radius: 12px;
+  background: rgba(234, 88, 12, 0.24);
+  border: 1px solid rgba(251, 146, 60, 0.45);
+  color: #FDE047;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  flex-shrink: 0;
+  padding: 4px 2px;
+}
+
+.tbt-turn-icon-box.is-arrive {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: rgba(52, 211, 153, 0.5);
+  color: #6EE7B7;
+}
+
+.tbt-turn-dist {
+  font-size: 11px;
+  font-weight: 900;
+  color: #FDE047;
+  letter-spacing: -0.02em;
+}
+
+.tbt-hud-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tbt-hud-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tbt-step-pill {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.24);
+  color: #FDE68A;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+.tbt-eta-txt {
+  font-size: 11px;
+  font-weight: 700;
+  color: #CBD5E1;
+}
+
+.tbt-primary-text {
+  font-size: 13.5px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: #FFFFFF;
+  word-break: keep-all;
+}
+
+.tbt-hud-close-btn {
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.tbt-hud-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(15, 23, 42, 0.65);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  color: #E2E8F0;
+}
+
+.tbt-sub-badge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 10px;
+  font-weight: 800;
+  color: #F8FAFC;
+}
+
+.tbt-sub-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 8) 지도 위 경로 흐름선 & 비행 요정 마커 & 출발/도착 배지 */
+.fairy-route-flow-dash {
+  animation: fairyDashFlow 1.25s linear infinite;
+}
+
+.route-endpoint-wrap {
+  background: transparent;
+  border: none;
+  overflow: visible !important;
+}
+
+.route-endpoint-pill {
+  display: inline-block;
+  width: max-content;
+  max-width: none !important;
+  transform: translate(-50%, -125%);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+  border: 1.5px solid #FFFFFF;
+}
+
+/* 길안내 모드 중에는 목적지 외 다른 식당 캡슐 핀을 은은하게 낮춰 경로 시인성 극대화 */
+.map-stage:has(.bottom-sheet.is-fairy-nav-mode) .price-capsule-marker:not(.is-active-marker) {
+  opacity: 0.22 !important;
+  filter: grayscale(0.45);
+}
+
+/* 길안내 HUD 활성 시 토스트가 HUD 아래쪽에 깔끔하게 표시되도록 위치 보정 */
+.bottom-sheet.is-fairy-nav-mode ~ .toast {
+  top: 124px;
+}
+
+/* 상세 시트 상단 헤더 [🧚 길안내] 원터치 포인트 버튼 */
+.dhero-action-btn.is-fairy-go {
+  background: linear-gradient(135deg, #FFFBEB 0%, #FFEDD5 100%);
+  border-color: #FB923C;
+  color: #C2410C;
+  font-weight: 800;
+}
+
+.route-endpoint-pill.is-start {
+  background: #2563EB;
+}
+
+.route-endpoint-pill.is-end {
+  background: #B91C1C;
+}
+
+.fairy-flying-pin-container {
+  background: transparent;
+  border: none;
+}
+
+.fairy-flying-pin-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.fairy-flying-aura {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.5) 0%, rgba(234, 88, 12, 0.12) 68%, transparent 100%);
+  animation: fairyPulseRing 1.9s ease-out infinite;
+  pointer-events: none;
+}
+
+.fairy-flying-img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  position: relative;
+  z-index: 2;
+  filter: drop-shadow(0 5px 10px rgba(185, 28, 28, 0.3));
+  transition: transform 0.2s ease;
+}
+
+.fairy-flying-pin-wrap.is-facing-left .fairy-flying-img {
+  transform: scaleX(-1);
+}
+
+.fairy-flying-tag {
+  position: relative;
+  z-index: 3;
+  margin-top: -4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #B91C1C 0%, #EA580C 100%);
+  color: #FFFFFF;
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  border: 1px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.24);
+}
+
+/* 9) 하단 요정 길안내 전용 시트 뷰 (#fairyNavSheet) */
+.bottom-sheet.is-fairy-nav-mode .sheet-header,
+.bottom-sheet.is-fairy-nav-mode .sheet-list-scroll,
+.bottom-sheet.is-fairy-nav-mode .detail-sheet-view {
+  display: none !important;
+}
+
+.fairy-nav-sheet-view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background-color: var(--bg-surface);
+}
+
+.fairy-nav-sheet-view[hidden] {
+  display: none !important;
+}
+
+.fnav-header-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fairy-nav-scroll-body {
+  height: var(--fairy-nav-scroll-height, 300px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 14px calc(22px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 출발지 선택 칩 */
+.fnav-origin-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.fnav-origin-lbl {
+  flex-shrink: 0;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background-color: #EFF6FF;
+  color: #1D4ED8;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.fnav-origin-scroll {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.fnav-origin-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.fnav-origin-chip {
+  appearance: none;
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background-color: var(--bg-offwhite);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fnav-origin-chip.is-active {
+  background-color: #1D4ED8;
+  border-color: #1D4ED8;
+  color: #FFFFFF;
+}
+
+/* 경로 옵션 3단 탭 */
+.fnav-route-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  padding: 4px;
+  border-radius: 11px;
+  background-color: #F3F4F6;
+}
+
+.fnav-rtab {
+  appearance: none;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fnav-rtab.is-active {
+  background-color: #FFFFFF;
+  color: var(--text-primary);
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1);
+}
+
+/* 소요 시간 요약 카드 */
+.fnav-summary-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 12px;
+  border-radius: 13px;
+  background-color: var(--bg-offwhite);
+  border: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.fnav-sum-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.fnav-walk-min {
+  font-size: 19px;
+  font-weight: 900;
+  color: #EA580C;
+  letter-spacing: -0.03em;
+}
+
+.fnav-eta-inline {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.fnav-sum-sub {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.fnav-source-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background-color: #FFF7ED;
+  border: 1px solid #FED7AA;
+  color: #9A3412;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+.fnav-source-pill.is-live {
+  background-color: #ECFDF5;
+  border-color: #6EE7B7;
+  color: #047857;
+}
+
+/* 3D 요정 음성·말풍선 스테이지 */
+.fnav-fairy-stage {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #FFFBEB 0%, #FFF7ED 100%);
+  border: 1px solid #FDBA74;
+}
+
+.fnav-fairy-stage.is-arrived {
+  background: linear-gradient(135deg, #ECFDF5 0%, #F0FDFA 100%);
+  border-color: #6EE7B7;
+}
+
+.fnav-stage-avatar-wrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background-color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.14);
+}
+
+.fnav-stage-avatar {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  animation: fairyGentleBob 2.4s ease-in-out infinite;
+}
+
+.fnav-stage-speech {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fnav-speech-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fnav-speech-who {
+  font-size: 11px;
+  font-weight: 800;
+  color: #C2410C;
+}
+
+.fnav-mini-toggles {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fnav-mini-btn {
+  appearance: none;
+  height: 23px;
+  padding: 0 7px;
+  border-radius: 999px;
+  border: 1px solid #CBD5E1;
+  background-color: #FFFFFF;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 10.5px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.fnav-mini-btn.is-on {
+  background-color: var(--text-primary);
+  border-color: var(--text-primary);
+  color: #FFFFFF;
+}
+
+.fnav-speech-main {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.fnav-speech-tip {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+/* 구간 컨트롤 버튼 바 */
+.fnav-step-controls {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr 1.15fr;
+  gap: 6px;
+}
+
+.fnav-ctrl-btn {
+  appearance: none;
+  height: 38px;
+  padding: 0 8px;
+  border-radius: 11px;
+  border: 1px solid var(--border-subtle);
+  background-color: #FFFFFF;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fnav-ctrl-btn:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.fnav-ctrl-btn.is-flight {
+  background-color: #FFF7ED;
+  border-color: #FED7AA;
+  color: #C2410C;
+}
+
+.fnav-ctrl-btn.is-primary {
+  border: none;
+  background: var(--accent-gradient);
+  color: #FFFFFF;
+  box-shadow: 0 3px 10px rgba(234, 88, 12, 0.24);
+}
+
+/* 지갑 지킴이 요정 응원 박스 */
+.fnav-wallet-cheer {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background-color: #FEF2F2;
+  border: 1px solid #FECACA;
+}
+
+.fnav-wallet-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.fnav-wallet-txt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fnav-wallet-txt strong {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #991B1B;
+}
+
+.fnav-wallet-txt span {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+/* 구간 타임라인 리스트 */
+.fnav-timeline-box {
+  padding: 11px 12px;
+  border-radius: 13px;
+  border: 1px solid var(--border-subtle);
+  background-color: #FFFFFF;
+}
+
+.fnav-tl-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.fnav-trio-mini {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.fnav-tl-head strong {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.fnav-tl-head span {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--text-secondary);
+}
+
+.fnav-step-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fnav-step-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 9px;
+  border-radius: 10px;
+  background-color: var(--bg-offwhite);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color 0.14s ease, border-color 0.14s ease;
+}
+
+.fnav-step-item.is-current {
+  background-color: #FFF7ED;
+  border-color: #FB923C;
+}
+
+.fnav-step-item.is-passed {
+  opacity: 0.62;
+}
+
+.fnav-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #E2E8F0;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fnav-step-item.is-current .fnav-step-num {
+  background-color: #EA580C;
+  color: #FFFFFF;
+}
+
+.fnav-step-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.fnav-step-info strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.fnav-step-info span {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.fnav-ext-handoff {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  padding-top: 2px;
 }
