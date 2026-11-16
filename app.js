@@ -1323,19 +1323,23 @@ const REPORT_FORM_URL = "";
      ========================================================================== */
 
   function matchesBudgetRule(place, budgetCode) {
-    if (budgetCode === "6000") {
-      return (
-        (place.minPrice !== null && place.minPrice <= 6000) ||
-        (place.minPrice === null && place.tagsList.includes("초가성비"))
-      );
+    if (!budgetCode) return true;
+    if (budgetCode === "refill") {
+      return hasRefillOrUpgradeTag(place);
     }
-    if (budgetCode === "10000") {
-      return (
-        (place.minPrice !== null && place.minPrice <= 10000) ||
-        (place.minPrice === null &&
-          (place.tagsList.includes("만원이하") ||
-            place.tagsList.includes("초가성비")))
-      );
+    const maxVal = Number(budgetCode);
+    if (Number.isFinite(maxVal) && maxVal > 0) {
+      if (place.minPrice !== null) {
+        return place.minPrice <= maxVal;
+      }
+      if (maxVal <= 6000) return place.tagsList.includes("초가성비");
+      if (maxVal <= 10000) {
+        return (
+          place.tagsList.includes("만원이하") ||
+          place.tagsList.includes("초가성비")
+        );
+      }
+      return true;
     }
     return true;
   }
@@ -1621,10 +1625,13 @@ const REPORT_FORM_URL = "";
         });
       }
     }
-    if (f.budget === "6000") {
-      list.push({ key: "budget", label: "💸 6천원 이하" });
-    } else if (f.budget === "10000") {
-      list.push({ key: "budget", label: "💴 1만원 이하" });
+    if (f.budget === "refill") {
+      list.push({ key: "budget", label: "지갑: 무한리필·곱빼기" });
+    } else if (f.budget && Number(f.budget) > 0) {
+      list.push({
+        key: "budget",
+        label: `지갑: ${Number(f.budget).toLocaleString("ko-KR")}원 이하`,
+      });
     }
     if (f.zone && f.zone !== "all") {
       list.push({ key: "zone", label: `📍 ${f.zone}` });
@@ -2117,7 +2124,7 @@ const REPORT_FORM_URL = "";
     if (chipBookmarkedLabel) {
       const favCount = BookmarkStore.count();
       chipBookmarkedLabel.textContent =
-        favCount > 0 ? `❤️ 찜한 곳 ${favCount}` : "❤️ 찜한 곳";
+        favCount > 0 ? `저장됨 ${favCount}` : "저장됨";
     }
 
     const chipVisitTime = document.getElementById("chipVisitTime");
@@ -2126,13 +2133,62 @@ const REPORT_FORM_URL = "";
       chipVisitTime.classList.toggle("is-active", isVisitTimeSimulated());
     }
     if (chipVisitTimeLabel) {
-      chipVisitTimeLabel.textContent = getVisitTimeDisplayLabel();
+      chipVisitTimeLabel.textContent = getVisitTimeDisplayLabel().replace(/^⏰\s*/, "");
     }
 
-    const chipB6 = document.getElementById("chipBudget6000");
-    const chipB10 = document.getElementById("chipBudget10000");
-    if (chipB6) chipB6.classList.toggle("is-active", f.budget === "6000");
-    if (chipB10) chipB10.classList.toggle("is-active", f.budget === "10000");
+    // 지갑 사정(예산) 칩 & 떠 있는 요정 버튼 & 모달 상태 동기화
+    const chipWallet = document.getElementById("chipWalletBudget");
+    const chipWalletLabel = document.getElementById("chipWalletBudgetLabel");
+    const fairyTitleEl = document.getElementById("brokeFairyBudgetTitle");
+    const fairySubEl = document.getElementById("brokeFairyBudgetSub");
+    const walletDisplayEl = document.getElementById("walletCurrentDisplay");
+    const walletMatchEl = document.getElementById("walletMatchCountText");
+    const walletSliderEl = document.getElementById("walletRangeInput");
+    const walletSliderLbl = document.getElementById("walletSliderValueLabel");
+
+    let walletLabelTxt = "지갑사정 ▾";
+    let fairyTitleTxt = "내 지갑사정";
+    let fairySubTxt = "가격대 선택";
+    let modalPriceTxt = "전체 가격대";
+
+    if (f.budget === "refill") {
+      walletLabelTxt = "무한리필·곱빼기 ▾";
+      fairyTitleTxt = "무한리필 모드";
+      fairySubTxt = `${matchedCount}곳 가능`;
+      modalPriceTxt = "무한리필 · 곱빼기 무료";
+    } else if (f.budget && Number(f.budget) > 0) {
+      const formattedWon = `${Number(f.budget).toLocaleString("ko-KR")}원 이하`;
+      walletLabelTxt = `${formattedWon} ▾`;
+      fairyTitleTxt = formattedWon;
+      fairySubTxt = `${matchedCount}곳 가능`;
+      modalPriceTxt = formattedWon;
+    }
+
+    if (chipWallet) chipWallet.classList.toggle("is-active", Boolean(f.budget));
+    if (chipWalletLabel) chipWalletLabel.textContent = walletLabelTxt;
+    if (fairyTitleEl) fairyTitleEl.textContent = fairyTitleTxt;
+    if (fairySubEl) fairySubEl.textContent = fairySubTxt;
+    if (walletDisplayEl) walletDisplayEl.textContent = modalPriceTxt;
+    if (walletMatchEl) {
+      const cLabel = CAMPUS_ANCHORS[state.currentCampus]?.label || "캠퍼스";
+      walletMatchEl.textContent = `${cLabel} 방문 가능 식당 ${matchedCount}곳`;
+    }
+
+    if (walletSliderEl && walletSliderLbl) {
+      if (f.budget && Number(f.budget) > 0) {
+        walletSliderEl.value = String(Math.min(16000, Math.max(3000, Number(f.budget))));
+        walletSliderLbl.textContent = `${Number(f.budget).toLocaleString("ko-KR")}원 이하`;
+      } else {
+        walletSliderEl.value = "16000";
+        walletSliderLbl.textContent = "제한 없음";
+      }
+    }
+
+    document.querySelectorAll(".wallet-preset-card").forEach((cardBtn) => {
+      const val = cardBtn.getAttribute("data-wallet-max") || "";
+      const isSelected = (!f.budget && val === "") || f.budget === val;
+      cardBtn.classList.toggle("is-active", isSelected);
+    });
 
     const chipRefill = document.getElementById("chipRefillOnly");
     if (chipRefill) chipRefill.classList.toggle("is-active", f.refillOnly);
@@ -2589,94 +2645,172 @@ const REPORT_FORM_URL = "";
         </div>
       `;
 
-    // 5) 학우 꿀팁 한줄평 (TipStore)
+    // 5) 학우 꿀팁 한줄평 (TipStore) 및 대표 음식 사진 + 상세 메뉴판
     const tipCount = TipStore.list(place.id).length;
     const activeRate = state.detailTipRating || "god";
+    const visualMenu = window.PlaceMenusData
+      ? window.PlaceMenusData.getPlaceVisualAndMenu(place)
+      : { photoUrl: "", photoCaption: "", menus: [] };
+
+    const heroPhotoHtml = visualMenu.photoUrl
+      ? `
+        <div class="detail-photo-banner">
+          <img
+            src="${escapeHtml(visualMenu.photoUrl)}"
+            alt="${escapeHtml(visualMenu.photoCaption || place.name)}"
+            class="detail-photo-img"
+            loading="eager"
+          />
+          <span class="detail-photo-caption">${escapeHtml(
+            visualMenu.photoCaption || `${place.name} 대표 음식`
+          )}</span>
+        </div>
+      `
+      : "";
+
+    const detailedMenuBoardHtml =
+      visualMenu.menus && visualMenu.menus.length > 0
+        ? `
+          <ul class="gmap-menu-board" role="list">
+            ${visualMenu.menus
+              .map(
+                (m) => `
+                  <li class="gmap-menu-item">
+                    <div class="gmi-left">
+                      <div class="gmi-name-row">
+                        <strong class="gmi-name">${escapeHtml(m.name)}</strong>
+                        ${
+                          m.badge
+                            ? `<span class="gmi-badge">${escapeHtml(m.badge)}</span>`
+                            : ""
+                        }
+                      </div>
+                      ${
+                        m.desc
+                          ? `<span class="gmi-desc">${escapeHtml(m.desc)}</span>`
+                          : ""
+                      }
+                    </div>
+                    <strong class="gmi-price">${escapeHtml(m.price)}</strong>
+                  </li>
+                `
+              )
+              .join("")}
+          </ul>
+        `
+        : `<p class="dprice-main-menu">${escapeHtml(
+            place.rep_menu || "매장 현장 메뉴판 확인"
+          )}</p>`;
 
     scrollBody.innerHTML = `
-      <!-- [블록 1] 상단 타이틀 & 액션 헤더 -->
+      <!-- [블록 0] 대표 음식 사진 & 상단 타이틀·구글맵 액션바 -->
       <article class="detail-hero-card">
-        <div class="dhero-top">
-          <div class="dhero-title-col">
-            <div class="dhero-badges">
-              <span class="dhero-campus-pill">${escapeHtml(campusLabel)}</span>
-              <span class="dhero-zone-cat">${escapeHtml(
-                place.zone
-              )} · ${escapeHtml(place.emoji)} ${escapeHtml(place.category)}</span>
+        ${heroPhotoHtml}
+        <div class="dhero-content">
+          <div class="dhero-top">
+            <div class="dhero-title-col">
+              <h2 class="dhero-name" id="detailPlaceName">${escapeHtml(
+                place.name
+              )}</h2>
+              <div class="dhero-sub-meta">
+                <span>${escapeHtml(place.category)}</span>
+                <span aria-hidden="true">·</span>
+                <span>${escapeHtml(campusLabel)} ${escapeHtml(place.zone)}</span>
+                <span aria-hidden="true">·</span>
+                <strong class="dhero-price-inline">${escapeHtml(
+                  place.priceTier.cardLabel
+                )}</strong>
+              </div>
             </div>
-            <h2 class="dhero-name" id="detailPlaceName">${escapeHtml(
-              place.name
-            )}</h2>
           </div>
 
-          <div class="dhero-actions">
+          ${
+            place.summary
+              ? `<p class="dhero-summary">${escapeHtml(place.summary)}</p>`
+              : ""
+          }
+
+          <!-- Google Maps 스타일 가로 원터치 액션 필 바 -->
+          <div class="gmap-action-pills">
             <button
               type="button"
-              class="dhero-action-btn is-fairy-go"
+              class="gpill-btn is-primary"
               id="detailHeroNavBtn"
               data-action="start-fairy-nav"
-              title="요정 실시간 도보 길안내"
             >
-              <span aria-hidden="true">🧚</span>
-              <span>길안내</span>
+              <span>🧚 GPS 길안내</span>
             </button>
+            <a
+              href="${escapeHtml(isCoop ? naverDirectFallbackUrl : primaryLinkUrl)}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="gpill-btn"
+              id="detailMenuLinkBtn"
+            >
+              <span>네이버 지도</span>
+            </a>
+            ${
+              isCoop
+                ? `<a href="${escapeHtml(
+                    primaryLinkUrl
+                  )}" target="_blank" rel="noopener noreferrer" class="gpill-btn" id="detailCoopMenuBtn"><span>금주 식단표</span></a>`
+                : ""
+            }
+            <a
+              href="${escapeHtml(kakaoRouteUrl)}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="gpill-btn"
+              id="detailKakaoRouteBtn"
+            >
+              <span>카카오맵</span>
+            </a>
             <button
               type="button"
-              class="dhero-action-btn${isBookmarked ? " is-bookmarked" : ""}"
+              class="gpill-btn${isBookmarked ? " is-saved" : ""}"
               id="detailBookmarkBtn"
               data-action="toggle-bookmark"
               aria-pressed="${String(isBookmarked)}"
-              title="찜하기"
             >
-              <span aria-hidden="true">${isBookmarked ? "❤️" : "🤍"}</span>
-              <span>${isBookmarked ? "찜됨" : "찜하기"}</span>
+              <span>${isBookmarked ? "♥ 저장됨" : "♡ 저장"}</span>
             </button>
             <button
               type="button"
-              class="dhero-action-btn"
+              class="gpill-btn"
               id="detailShareBtn"
               data-action="share-place"
-              title="공유 링크 복사"
             >
-              <span aria-hidden="true">🔗</span>
               <span>공유</span>
             </button>
           </div>
         </div>
-        ${
-          place.summary
-            ? `<p class="dhero-summary">${escapeHtml(place.summary)}</p>`
-            : ""
-        }
       </article>
 
-      <!-- [블록 2] 핵심 가격 & 리필·혜택 하이라이트 카드 -->
-      <section class="detail-price-box" aria-label="가격 및 리필 혜택">
-        <div class="dprice-trust-row">
-          <div class="dprice-badges-left">
+      <!-- [블록 2] 상세 메뉴판 & 가성비 혜택 -->
+      <section class="detail-section-card" aria-label="상세 메뉴판 및 혜택">
+        <div class="dsec-title-row">
+          <h3 class="dsec-heading">메뉴판</h3>
+          <div class="dprice-badges-right">
             ${priceStatusBadgeHtml}
             ${staleBadgeHtml}
+            ${priceReportBtnHtml}
           </div>
-          ${priceReportBtnHtml}
         </div>
 
-        <p class="dprice-main-menu">${escapeHtml(
-          place.rep_menu || "대표 메뉴 현장 확인 필요"
-        )}</p>
-
+        ${detailedMenuBoardHtml}
         ${perksBoxHtml}
         ${tagsRowHtml}
       </section>
 
-      <!-- [블록 3] 실시간 영업시간 & 브레이크타임 상세 박스 -->
+      <!-- [블록 3] 실시간 영업시간 & 브레이크타임 -->
       <section class="detail-section-card" aria-label="영업시간 및 브레이크타임">
         <div class="dsec-title-row">
-          <h3 class="dsec-heading">🕒 실시간 영업시간 &amp; 브레이크타임</h3>
+          <h3 class="dsec-heading">영업시간</h3>
         </div>
 
         <div class="detail-biz-banner">
           <span class="dbiz-pill state-${escapeHtml(biz.state)}">${escapeHtml(
-      buildBizStateBadgeTitle(biz.state)
+      buildBizStateBadgeTitle(biz.state).replace(/^[^\s]+\s/, "")
     )}</span>
           <span class="dbiz-detail-txt">${escapeHtml(
             biz.label + simSuffix
@@ -2695,11 +2829,11 @@ const REPORT_FORM_URL = "";
         </dl>
       </section>
 
-      <!-- [블록 4] 위치 & 요정 실시간 도보 길안내 + 외부 지도·메뉴판 바로가기 바 -->
+      <!-- [블록 4] 위치 & 요정 실시간 GPS 도보 길안내 -->
       <section class="detail-section-card" aria-label="위치 및 길찾기">
         <div class="dsec-title-row">
-          <h3 class="dsec-heading">📍 위치 &amp; 요정 도보 길안내</h3>
-          <span class="dloc-walk-pill">🚶 ${escapeHtml(walkSummaryText)}</span>
+          <h3 class="dsec-heading">위치 · 도보 안내</h3>
+          <span class="dloc-walk-pill">${escapeHtml(walkSummaryText)}</span>
         </div>
 
         ${
@@ -2722,18 +2856,16 @@ const REPORT_FORM_URL = "";
             id="detailCopyAddrBtn"
             data-action="copy-address"
           >
-            주소 복사
+            복사
           </button>
         </div>
-
-        ${externalButtonsHtml}
       </section>
 
-      <!-- [블록 5] 경희대 학우 꿀팁 한줄평 (TipStore) -->
-      <section class="detail-section-card" aria-label="학우 꿀팁 한줄평">
+      <!-- [블록 5] 경희대 학우 한줄 팁 -->
+      <section class="detail-section-card" aria-label="학우 한줄 팁">
         <div class="dsec-title-row">
-          <h3 class="dsec-heading">💬 경희대 학우 꿀팁 한줄평</h3>
-          <span class="dtips-count-badge" id="detailTipsCountBadge">${tipCount}개 팁</span>
+          <h3 class="dsec-heading">학우 한줄 팁</h3>
+          <span class="dtips-count-badge" id="detailTipsCountBadge">${tipCount}개</span>
         </div>
 
         <div class="tip-rating-group" role="radiogroup" aria-label="체감 가성비 선택">
@@ -2743,7 +2875,7 @@ const REPORT_FORM_URL = "";
             data-action="select-tip-rating"
             data-rating="god"
           >
-            💰 갓성비
+            갓성비
           </button>
           <button
             type="button"
@@ -2751,7 +2883,7 @@ const REPORT_FORM_URL = "";
             data-action="select-tip-rating"
             data-rating="good"
           >
-            👍 무난해요
+            무난해요
           </button>
           <button
             type="button"
@@ -2759,7 +2891,7 @@ const REPORT_FORM_URL = "";
             data-action="select-tip-rating"
             data-rating="up"
           >
-            🤔 가격 올랐어요
+            가격 올랐어요
           </button>
         </div>
 
@@ -2769,7 +2901,7 @@ const REPORT_FORM_URL = "";
             id="tipTextInput"
             class="tip-text-input"
             maxlength="120"
-            placeholder="꿀팁 남기기 (예: 제육 양 진짜 많아요 / 12시엔 웨이팅)"
+            placeholder="꿀팁 남기기 (예: 제육 양 많아요 / 점심 웨이팅)"
             aria-label="학우 한줄평 입력"
           />
           <button
@@ -3002,9 +3134,22 @@ const REPORT_FORM_URL = "";
     const htmlItems = decoratedPlaces.map(({ place, biz, distLabel }) => {
       const isSelected = state.selectedPlaceId === String(place.id);
       const isFav = BookmarkStore.has(place.id);
-      const metaTag = `${place.shortZone} · ${place.shortCategory}`;
+      const metaTag = `${place.shortCategory} · ${place.shortZone} · ${distLabel}`;
       const repMenuText =
-        place.rep_menu || place.summary || "대표 메뉴 현장 확인";
+        place.rep_menu || place.summary || "메뉴 확인";
+      const visual = window.PlaceMenusData
+        ? window.PlaceMenusData.getPlaceVisualAndMenu(place)
+        : { photoUrl: "" };
+      const thumbHtml = visual.photoUrl
+        ? `<div class="card-thumb-wrap"><img src="${escapeHtml(
+            visual.photoUrl
+          )}" alt="${escapeHtml(
+            place.name
+          )}" class="card-thumb-img" loading="lazy" /></div>`
+        : "";
+      const cleanPerk = place.perkHighlight
+        ? place.perkHighlight.replace(/^✨\s*/, "")
+        : "";
 
       return `
         <li
@@ -3016,35 +3161,38 @@ const REPORT_FORM_URL = "";
         place.priceTier.cardLabel
       )}"
         >
-          <div class="card-line-1">
-            <div class="card-title-wrap">
-              <span class="card-meta-tag">${escapeHtml(metaTag)}</span>
-              <h3 class="card-place-name">${escapeHtml(place.name)}</h3>
-              ${
-                isFav
-                  ? '<span class="card-fav-heart" aria-label="찜한 식당">❤️</span>'
-                  : ""
-              }
-              <span class="card-distance">${escapeHtml(distLabel)}</span>
+          <div class="card-main-row">
+            <div class="card-body-col">
+              <div class="card-line-1">
+                <h3 class="card-place-name">${escapeHtml(place.name)}</h3>
+                ${
+                  isFav
+                    ? '<span class="card-fav-heart" aria-label="저장된 식당">♥</span>'
+                    : ""
+                }
+                <span class="card-price-badge ${escapeHtml(
+                  place.priceTier.tierClass
+                )}">
+                  ${escapeHtml(place.priceTier.cardLabel)}
+                </span>
+              </div>
+
+              <div class="card-meta-line">${escapeHtml(metaTag)}</div>
+
+              ${buildCardBusinessLineHtml(place, biz)}
+
+              <div class="card-line-3">
+                ${
+                  cleanPerk
+                    ? `<span class="card-perk-chip">${escapeHtml(
+                        cleanPerk
+                      )}</span>`
+                    : ""
+                }
+                <span class="card-rep-menu">${escapeHtml(repMenuText)}</span>
+              </div>
             </div>
-            <span class="card-price-badge ${escapeHtml(
-              place.priceTier.tierClass
-            )}">
-              ${escapeHtml(place.priceTier.cardLabel)}
-            </span>
-          </div>
-
-          ${buildCardBusinessLineHtml(place, biz)}
-
-          <div class="card-line-3">
-            ${
-              place.perkHighlight
-                ? `<span class="card-perk-chip">${escapeHtml(
-                    place.perkHighlight
-                  )}</span>`
-                : ""
-            }
-            <span class="card-rep-menu">${escapeHtml(repMenuText)}</span>
+            ${thumbHtml}
           </div>
         </li>
       `;
@@ -3266,8 +3414,25 @@ const REPORT_FORM_URL = "";
     toggleVisitTimePopover(false);
   }
 
+  function openWalletModal() {
+    closeVisitTimePopover();
+    closeFilterModal();
+    closeMenuModal();
+    closeReportModal();
+    const modal = document.getElementById("walletModal");
+    if (!modal) return;
+    modal.hidden = false;
+  }
+
+  function closeWalletModal() {
+    const modal = document.getElementById("walletModal");
+    if (!modal) return;
+    modal.hidden = true;
+  }
+
   function openFilterModal() {
     closeVisitTimePopover();
+    closeWalletModal();
     closeMenuModal();
     closeReportModal();
     const modal = document.getElementById("filterModal");
@@ -3775,8 +3940,15 @@ const REPORT_FORM_URL = "";
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         if (locateBtn) locateBtn.classList.remove("is-locating");
-        const { latitude, longitude } = pos.coords;
+        const { latitude, longitude, accuracy } = pos.coords;
         state.userCoords = { lat: latitude, lng: longitude };
+        if (window.FairyNavEngine) {
+          window.FairyNavEngine.handleRealtimeGpsPosition(
+            latitude,
+            longitude,
+            accuracy
+          );
+        }
 
         if (!state.map) return;
 
@@ -3977,16 +4149,65 @@ const REPORT_FORM_URL = "";
       });
     }
 
-    // 예산 단일 토글 칩 (6천원 이하 / 1만원 이하)
-    ["chipBudget6000", "chipBudget10000"].forEach((id) => {
-      const el = document.getElementById(id);
+    // 지갑 든 요정(상단 로고 · 좌하단 떠 있는 요정 · 지갑사정 칩) 클릭 -> 원하는 가격대(지갑사정) 선택 모달!
+    const brandBadge = document.getElementById("brandBadge");
+    const brokeFairyBtn = document.getElementById("brokeFairyHelperBtn");
+    const chipWalletBudget = document.getElementById("chipWalletBudget");
+    const walletModal = document.getElementById("walletModal");
+    const closeWalletModalBtn = document.getElementById("closeWalletModalBtn");
+    const walletPresetGrid = document.getElementById("walletPresetGrid");
+    const walletRangeInput = document.getElementById("walletRangeInput");
+    const walletApplyBtn = document.getElementById("walletApplyBtn");
+    const walletResetBtn = document.getElementById("walletResetBtn");
+
+    [brandBadge, brokeFairyBtn, chipWalletBudget].forEach((el) => {
       if (!el) return;
-      el.addEventListener("click", () => {
-        const b = el.getAttribute("data-budget");
-        state.filters.budget = state.filters.budget === b ? null : b;
-        refreshCampusView({ rebuildMarkers: true, resetScroll: true });
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (window.FairyNavEngine) {
+          window.FairyNavEngine.triggerFairyHop(el);
+        }
+        openWalletModal();
       });
     });
+
+    if (closeWalletModalBtn) {
+      closeWalletModalBtn.addEventListener("click", closeWalletModal);
+    }
+    if (walletModal) {
+      walletModal.addEventListener("click", (e) => {
+        if (e.target === walletModal) closeWalletModal();
+      });
+    }
+    if (walletPresetGrid) {
+      walletPresetGrid.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-wallet-max]");
+        if (!btn) return;
+        const val = btn.getAttribute("data-wallet-max") || "";
+        state.filters.budget = val === "" ? null : val;
+        refreshCampusView({ rebuildMarkers: true, resetScroll: true });
+      });
+    }
+    if (walletRangeInput) {
+      walletRangeInput.addEventListener("input", () => {
+        const num = Number(walletRangeInput.value);
+        state.filters.budget = num >= 16000 ? null : String(num);
+        refreshCampusView({ rebuildMarkers: true, resetScroll: true });
+      });
+    }
+    if (walletResetBtn) {
+      walletResetBtn.addEventListener("click", () => {
+        state.filters.budget = null;
+        refreshCampusView({ rebuildMarkers: true, resetScroll: true });
+      });
+    }
+    if (walletApplyBtn) {
+      walletApplyBtn.addEventListener("click", () => {
+        closeWalletModal();
+        if (state.isDetailOpen) backToListView();
+        if (state.sheetSnap === "collapsed") setSheetSnap("half");
+      });
+    }
 
     const chipRefillOnly = document.getElementById("chipRefillOnly");
     if (chipRefillOnly) {
@@ -4568,6 +4789,7 @@ const REPORT_FORM_URL = "";
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         closeVisitTimePopover();
+        closeWalletModal();
         closeFilterModal();
         closeMenuModal();
         closeReportModal();
@@ -4630,6 +4852,8 @@ const REPORT_FORM_URL = "";
     backToListView,
     clearPlaceSelection,
     resetAllFilters,
+    openWalletModal,
+    closeWalletModal,
     openFilterModal,
     closeFilterModal,
     openMenuModal,

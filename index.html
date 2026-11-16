@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
   <meta name="theme-color" content="#FFFFFF" />
   <title>경희대 거지맵 · 서울캠 &amp; 국제캠 가성비 맛집 지도</title>
-  <meta name="description" content="텅 빈 지갑도 든든하게 채워주는 경희대학교 서울캠(회기·외대) &amp; 국제캠(영통·서천) 실시간 가성비 맛집 · 요정 길안내 지도" />
+  <meta name="description" content="경희대학교 서울캠(회기·외대) &amp; 국제캠(영통·서천) 학생들을 위한 가성비 맛집 · 메뉴판 · GPS 요정 길안내 지도" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="경희대 거지맵 · 서울캠 &amp; 국제캠 가성비 맛집 지도" />
-  <meta property="og:description" content="텅 빈 지갑도 든든하게 채워주는 실시간 가성비 맛집 · 3D 요정 도보 길안내 지도" />
+  <meta property="og:description" content="내 지갑 사정에 딱 맞는 가성비 식당 · 상세 메뉴판 · 실시간 GPS 요정 길안내" />
   <meta property="og:image" content="./assets/fairy/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content="./assets/fairy/og-image.png" />
@@ -19,12 +19,12 @@
     href="./assets/fairy/fairy-head-pin.webp"
   />
 
-  <!-- Pretendard Variable Webfont CDN -->
+  <!-- Google Fonts: Plus Jakarta Sans + Roboto + Noto Sans KR (Google Material UI Typography) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&family=Roboto:wght@400;500;700&display=swap"
     rel="stylesheet"
-    as="style"
-    crossorigin
-    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
   />
 
   <!-- Leaflet 1.9.4 CSS -->
@@ -36,63 +36,11 @@
   />
 
   <!-- App Stylesheet -->
-  <link rel="stylesheet" href="./style.css?v=20261114" />
+  <link rel="stylesheet" href="./style.css?v=20261117" />
 </head>
 <body>
   <div class="app-shell" id="appShell">
-    <!-- 상단 고정 헤더 (54px) -->
-    <header class="top-header" role="banner">
-      <a href="./" class="brand-badge" id="brandBadge" aria-label="경희대 거지맵 홈 (요정 응원 보기)">
-        <span class="brand-emoji has-fairy" id="brandLogoSlot" aria-hidden="true">
-          <img
-            src="./assets/fairy/fairy-broke.png"
-            alt=""
-            class="brand-fairy-img"
-            draggable="false"
-          />
-        </span>
-        <span class="brand-title">경희대 거지맵</span>
-      </a>
-
-      <div class="header-right">
-        <div class="campus-segmented" role="tablist" aria-label="캠퍼스 선택">
-          <button
-            type="button"
-            class="campus-tab is-active"
-            id="btnCampusSeoul"
-            data-campus="seoul"
-            role="tab"
-            aria-selected="true"
-          >
-            서울캠
-          </button>
-          <button
-            type="button"
-            class="campus-tab"
-            id="btnCampusGlobal"
-            data-campus="global"
-            role="tab"
-            aria-selected="false"
-          >
-            국제캠
-          </button>
-        </div>
-
-        <button
-          type="button"
-          class="menu-btn"
-          id="menuBtn"
-          aria-label="거지맵 메뉴 및 맛집 제보 열기"
-          aria-haspopup="dialog"
-          aria-controls="menuModal"
-          title="메뉴 및 제보"
-        >
-          <span aria-hidden="true">☰</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- 메인 지도 + 플로팅 필터 + 바텀시트 스테이지 -->
+    <!-- 전체 화면 지도 + Google Maps 스타일 플로팅 검색/칩 + 바텀시트 -->
     <main class="map-stage" id="mapStage">
       <div id="map" class="map-canvas" aria-label="경희대 가성비 맛집 지도"></div>
 
@@ -106,22 +54,31 @@
         hidden
       ></div>
 
-      <!-- 1. 지도 상단 플로팅 검색창 + 1줄 가로 스크롤 빠른 필터 바 -->
+      <!-- 1. Google Maps 스타일 상단 플로팅 통합 검색바 + 심플 필터 칩 -->
       <div class="floating-filter-zone" id="floatingFilterZone">
-        <!-- 1-1) 통합 검색 입력바 -->
-        <div class="search-bar-row">
-          <div class="search-input-wrap">
+        <!-- 1-1) Google Maps 스타일 원형 필(Pill) 검색바 -->
+        <div class="gmap-omnibox" role="search">
+          <button
+            type="button"
+            class="brand-badge"
+            id="brandBadge"
+            aria-label="지갑 사정(예산) 선택 열기"
+            title="클릭하여 내 지갑 사정(예산) 선택"
+          >
             <img
-              src="./assets/fairy/fairy-trio.webp"
+              src="./assets/fairy/fairy-broke.png"
               alt=""
-              class="search-fairy-icon"
+              class="brand-fairy-img"
               draggable="false"
             />
+          </button>
+
+          <div class="search-input-wrap">
             <input
               type="search"
               id="searchInput"
               class="search-input"
-              placeholder="식당명, 제육, 칼국수, 무한리필 검색..."
+              placeholder="거지맵 검색 (식당, 제육, 칼국수...)"
               autocomplete="off"
               enterkeyhint="search"
               aria-label="식당 통합 검색"
@@ -137,28 +94,63 @@
             </button>
           </div>
 
+          <div class="campus-segmented" role="tablist" aria-label="캠퍼스 선택">
+            <button
+              type="button"
+              class="campus-tab is-active"
+              id="btnCampusSeoul"
+              data-campus="seoul"
+              role="tab"
+              aria-selected="true"
+            >
+              서울
+            </button>
+            <button
+              type="button"
+              class="campus-tab"
+              id="btnCampusGlobal"
+              data-campus="global"
+              role="tab"
+              aria-selected="false"
+            >
+              국제
+            </button>
+          </div>
+
           <button
             type="button"
-            id="openFilterModalBtn"
-            class="custom-filter-btn"
+            class="menu-btn"
+            id="menuBtn"
+            aria-label="메뉴 및 시트 연동 열기"
             aria-haspopup="dialog"
-            aria-controls="filterModal"
+            aria-controls="menuModal"
+            title="메뉴 및 시트 연동"
           >
-            <span aria-hidden="true">🎯</span>
-            <span>맞춤필터</span>
-            <span class="filter-count-badge" id="filterCountBadge" hidden>0</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="4" y1="7" x2="20" y2="7"></line>
+              <line x1="4" y1="12" x2="20" y2="12"></line>
+              <line x1="4" y1="17" x2="20" y2="17"></line>
+            </svg>
           </button>
         </div>
 
-        <!-- 1-2) 1줄 가로 스크롤 빠른 칩 바 -->
+        <!-- 1-2) Google Maps 스타일 심플 가로 스크롤 칩 바 -->
         <div class="quick-chips-row" id="quickChipsRow" role="toolbar" aria-label="빠른 조건 필터">
           <button type="button" class="qchip" id="chipOpenOnly">
             <span class="qchip-dot"></span>
-            <span>🟢 영업 중만</span>
+            <span>영업 중</span>
+          </button>
+
+          <button type="button" class="qchip" id="chipWalletBudget">
+            <span id="chipWalletBudgetLabel">지갑사정 ▾</span>
+          </button>
+
+          <button type="button" class="qchip" id="chipRefillOnly">
+            리필·곱빼기
           </button>
 
           <button type="button" class="qchip" id="chipBookmarkedOnly">
-            <span id="chipBookmarkedLabel">❤️ 찜한 곳</span>
+            <span id="chipBookmarkedLabel">저장됨</span>
           </button>
 
           <button
@@ -168,37 +160,36 @@
             aria-haspopup="true"
             aria-expanded="false"
           >
-            <span id="chipVisitTimeLabel">⏰ 지금 방문 ▾</span>
-          </button>
-
-          <button type="button" class="qchip" id="chipBudget6000" data-budget="6000">
-            💸 6천원 이하
-          </button>
-
-          <button type="button" class="qchip" id="chipBudget10000" data-budget="10000">
-            💴 1만원 이하
-          </button>
-
-          <button type="button" class="qchip" id="chipRefillOnly">
-            🍚 밥·사리 리필
+            <span id="chipVisitTimeLabel">지금 방문 ▾</span>
           </button>
 
           <span class="qchip-divider" aria-hidden="true"></span>
 
-          <!-- 캠퍼스별 권역·기준점 칩 동적 렌더링 슬롯 -->
+          <!-- 캠퍼스별 권역 칩 슬롯 -->
           <div class="zone-chips-inline" id="zoneChipsInline"></div>
+
+          <button
+            type="button"
+            id="openFilterModalBtn"
+            class="qchip custom-filter-chip"
+            aria-haspopup="dialog"
+            aria-controls="filterModal"
+          >
+            <span>필터</span>
+            <span class="filter-count-badge" id="filterCountBadge" hidden>0</span>
+          </button>
         </div>
 
         <!-- 방문 시각 선택 미니 팝오버 -->
         <div class="visit-time-popover" id="visitTimePopover" role="dialog" aria-label="방문 예정 시각 선택" hidden>
           <div class="vtp-head">
-            <span class="vtp-title">⏰ 방문 예정 시각 시뮬레이터 (KST)</span>
+            <span class="vtp-title">방문 예정 시각 (KST)</span>
             <button type="button" class="vtp-close" id="vtpCloseBtn" aria-label="닫기">✕</button>
           </div>
 
           <div class="vtp-day-row" role="group" aria-label="요일 기준 선택">
-            <button type="button" class="vtp-day-btn is-active" data-day-mode="today">오늘 기준</button>
-            <button type="button" class="vtp-day-btn" data-day-mode="weekday">평일(월~금)</button>
+            <button type="button" class="vtp-day-btn is-active" data-day-mode="today">오늘</button>
+            <button type="button" class="vtp-day-btn" data-day-mode="weekday">평일</button>
             <button type="button" class="vtp-day-btn" data-day-mode="sat">토요일</button>
             <button type="button" class="vtp-day-btn" data-day-mode="sun">일요일</button>
           </div>
@@ -206,59 +197,61 @@
           <div class="vtp-presets">
             <button type="button" class="vtp-preset is-active" data-time-preset="now">
               <strong>지금 (실시간)</strong>
-              <span>현재 KST 시각</span>
+              <span>현재 시각</span>
             </button>
             <button type="button" class="vtp-preset" data-time-preset="08:40">
-              <strong>오늘 아침 08:40</strong>
-              <span>천원의아침밥 체크</span>
+              <strong>아침 08:40</strong>
+              <span>천원의 아침밥</span>
             </button>
             <button type="button" class="vtp-preset" data-time-preset="12:30">
-              <strong>오늘 점심 12:30</strong>
-              <span>점심 피크 영업</span>
+              <strong>점심 12:30</strong>
+              <span>점심 영업</span>
             </button>
             <button type="button" class="vtp-preset" data-time-preset="15:30">
-              <strong>오후 공강 15:30</strong>
-              <span>브레이크타임 회피!</span>
+              <strong>공강 15:30</strong>
+              <span>브레이크타임 체크</span>
             </button>
             <button type="button" class="vtp-preset" data-time-preset="18:00">
-              <strong>오늘 저녁 18:00</strong>
-              <span>석식·저녁 밥약</span>
+              <strong>저녁 18:00</strong>
+              <span>석식·밥약</span>
             </button>
             <button type="button" class="vtp-preset" data-time-preset="22:30">
               <strong>야식 22:30</strong>
-              <span>야작·심야 영업</span>
+              <span>심야 영업</span>
             </button>
           </div>
 
           <div class="vtp-custom-row">
-            <label for="customVisitTimeInput" class="vtp-custom-label">직접 시간 선택</label>
+            <label for="customVisitTimeInput" class="vtp-custom-label">직접 선택</label>
             <input type="time" id="customVisitTimeInput" class="vtp-time-input" value="15:30" />
             <button type="button" class="vtp-apply-custom-btn" id="applyCustomTimeBtn">적용</button>
           </div>
         </div>
       </div>
 
-      <!-- 좌하단 '지갑 벌리고 놀란 요정' 긴급 구조 & 도보 길안내 플로팅 버튼 -->
+      <!-- 좌하단 떠 있는 '지갑 든 요정' 플로팅 버튼 (클릭 시 지갑사정 가격대 선택!) -->
       <button
         type="button"
         class="broke-fairy-float-btn"
         id="brokeFairyHelperBtn"
-        aria-label="텅 빈 지갑 긴급 구조 및 요정 도보 길안내 시작"
-        title="클릭하면 초가성비 맛집으로 요정이 실제 도보 길을 안내해요!"
+        aria-haspopup="dialog"
+        aria-controls="walletModal"
+        aria-label="내 지갑 사정(원하는 가격대) 선택하기"
+        title="클릭해서 내 지갑 사정(예산)을 선택해 보세요!"
       >
         <img
           src="./assets/fairy/fairy-broke.png"
-          alt="텅 빈 지갑을 벌리고 놀란 요정"
+          alt="지갑을 벌리고 놀란 요정"
           class="bff-img"
           draggable="false"
         />
         <span class="bff-bubble">
-          <strong>텅 빈 지갑?!</strong>
-          <span>요정 길안내 ✨</span>
+          <strong id="brokeFairyBudgetTitle">내 지갑사정</strong>
+          <span id="brokeFairyBudgetSub">가격대 선택</span>
         </span>
       </button>
 
-      <!-- 우측 지도 컨트롤 ([내 위치] 및 [+ / -] 줌 버튼) -->
+      <!-- 우측 지도 컨트롤 (Google Maps 원형 버튼) -->
       <div class="custom-map-controls" id="customMapControls" aria-label="지도 제어 버튼">
         <button
           type="button"
@@ -267,39 +260,22 @@
           aria-label="내 위치 보기"
           title="내 위치"
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="4"></circle>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3.5"></circle>
             <line x1="12" y1="2" x2="12" y2="5"></line>
             <line x1="12" y1="19" x2="12" y2="22"></line>
             <line x1="2" y1="12" x2="5" y2="12"></line>
             <line x1="19" y1="12" x2="22" y2="12"></line>
           </svg>
-          <span class="locate-label">내 위치</span>
         </button>
 
         <div class="zoom-group" role="group" aria-label="지도 확대 축소">
-          <button
-            type="button"
-            class="map-ctrl-btn zoom-btn"
-            id="zoomInBtn"
-            aria-label="지도 확대"
-            title="확대 (+)"
-          >
-            +
-          </button>
-          <button
-            type="button"
-            class="map-ctrl-btn zoom-btn"
-            id="zoomOutBtn"
-            aria-label="지도 축소"
-            title="축소 (-)"
-          >
-            −
-          </button>
+          <button type="button" class="map-ctrl-btn zoom-btn" id="zoomInBtn" aria-label="확대">+</button>
+          <button type="button" class="map-ctrl-btn zoom-btn" id="zoomOutBtn" aria-label="축소">−</button>
         </div>
       </div>
 
-      <!-- 3단 드래그 바텀시트 (collapsed / half / full) -->
+      <!-- 3단 드래그 바텀시트 (Google Maps 하단 시트 스타일) -->
       <section
         class="bottom-sheet"
         id="bottomSheet"
@@ -313,59 +289,21 @@
 
           <div class="sheet-top-row">
             <div class="sheet-title-group">
-              <h2 class="sheet-title" id="sheetTitle">서울캠 가성비 맛집 28곳</h2>
-              <span class="sheet-open-sub" id="sheetOpenSub">· 지금 영업 중 0곳</span>
+              <h2 class="sheet-title" id="sheetTitle">서울캠 맛집 28곳</h2>
+              <span class="sheet-open-sub" id="sheetOpenSub">· 영업 중 0곳</span>
             </div>
 
-            <div class="sheet-quick-btns" role="group" aria-label="시트 크기 빠른 전환">
-              <button
-                type="button"
-                class="sheet-quick-btn"
-                id="btnSheetMapWide"
-                data-snap-target="collapsed"
-              >
-                지도 넓게
-              </button>
-              <button
-                type="button"
-                class="sheet-quick-btn"
-                id="btnSheetFullList"
-                data-snap-target="full"
-              >
-                목록 전체
-              </button>
+            <div class="sheet-quick-btns" role="group" aria-label="시트 크기 전환">
+              <button type="button" class="sheet-quick-btn" id="btnSheetMapWide" data-snap-target="collapsed">지도</button>
+              <button type="button" class="sheet-quick-btn" id="btnSheetFullList" data-snap-target="full">목록</button>
             </div>
           </div>
 
           <div class="sheet-sort-row">
             <div class="sort-tabs" role="tablist" aria-label="정렬 기준">
-              <button
-                type="button"
-                class="sort-tab is-active"
-                data-sort="recommended"
-                role="tab"
-                aria-selected="true"
-              >
-                추천순
-              </button>
-              <button
-                type="button"
-                class="sort-tab"
-                data-sort="price_asc"
-                role="tab"
-                aria-selected="false"
-              >
-                낮은가격순
-              </button>
-              <button
-                type="button"
-                class="sort-tab"
-                data-sort="distance_asc"
-                role="tab"
-                aria-selected="false"
-              >
-                가까운순
-              </button>
+              <button type="button" class="sort-tab is-active" data-sort="recommended" role="tab" aria-selected="true">추천순</button>
+              <button type="button" class="sort-tab" data-sort="price_asc" role="tab" aria-selected="false">낮은가격순</button>
+              <button type="button" class="sort-tab" data-sort="distance_asc" role="tab" aria-selected="false">가까운순</button>
             </div>
             <span class="sort-hint" id="sortHint">영업중·저가 우선</span>
           </div>
@@ -373,10 +311,8 @@
 
         <!-- 카드 리스트 스크롤 컨테이너 -->
         <div class="sheet-list-scroll" id="sheetListScroll">
-          <!-- 활성 필터 요약 바 (1개 이상 필터 적용 시 노출) -->
           <div class="active-filters-bar" id="activeFiltersBar" hidden></div>
 
-          <!-- 결과 0건 빈 상태 안내 박스 -->
           <div class="empty-state-box" id="emptyStateBox" hidden>
             <img
               src="./assets/fairy/fairy-sleep.webp"
@@ -384,17 +320,17 @@
               class="empty-fairy-img"
               draggable="false"
             />
-            <p class="empty-title">조건에 맞는 식당이 아직 잠들어 있어요 😴</p>
-            <p class="empty-desc">브레이크타임이거나 예산·거리 조건이 좁을 수 있어요.</p>
+            <p class="empty-title">조건에 맞는 식당이 없어요</p>
+            <p class="empty-desc">지갑 사정(예산)을 조금 넓히거나 필터를 초기화해 보세요.</p>
             <button type="button" class="empty-reset-btn" id="emptyResetBtn">
-              필터 전체 초기화
+              필터 초기화
             </button>
           </div>
 
           <ul class="place-list" id="placeList" role="list"></ul>
         </div>
 
-        <!-- Step 4: 한눈에 읽히는 식당 상세 시트 뷰 (#detailSheet) -->
+        <!-- 식당 상세 시트 뷰 (#detailSheet: 대표 음식 사진 + 상세 메뉴판 + GPS 길안내) -->
         <div class="detail-sheet-view" id="detailSheet" aria-label="식당 상세 정보" hidden>
           <div class="detail-drag-header" id="detailDragHeader">
             <div class="sheet-grabber-wrap" id="detailGrabber" title="드래그하여 시트 높이 조절">
@@ -403,24 +339,11 @@
             <div class="detail-nav-row">
               <button type="button" class="detail-back-btn" id="detailBackBtn">
                 <span aria-hidden="true">←</span>
-                <span>목록으로</span>
+                <span>목록</span>
               </button>
               <div class="detail-nav-actions">
-                <button
-                  type="button"
-                  class="detail-expand-btn"
-                  id="detailExpandBtn"
-                >
-                  크게 보기
-                </button>
-                <button
-                  type="button"
-                  class="detail-close-btn"
-                  id="detailCloseBtn"
-                  aria-label="상세 정보 닫기"
-                >
-                  ✕
-                </button>
+                <button type="button" class="detail-expand-btn" id="detailExpandBtn">크게 보기</button>
+                <button type="button" class="detail-close-btn" id="detailCloseBtn" aria-label="상세 정보 닫기">✕</button>
               </div>
             </div>
           </div>
@@ -428,7 +351,7 @@
           <div class="detail-scroll-body" id="detailScrollBody"></div>
         </div>
 
-        <!-- 요정 실시간 도보 길안내 시트 뷰 (#fairyNavSheet) -->
+        <!-- 요정 실시간 GPS 도보 길안내 시트 뷰 (#fairyNavSheet) -->
         <div
           class="fairy-nav-sheet-view"
           id="fairyNavSheet"
@@ -444,23 +367,10 @@
                 <span aria-hidden="true">←</span>
                 <span>상세정보</span>
               </button>
-              <strong class="fnav-header-title" id="fairyNavDestTitle">🧚 도보 길안내</strong>
+              <strong class="fnav-header-title" id="fairyNavDestTitle">도보 길안내</strong>
               <div class="detail-nav-actions">
-                <button
-                  type="button"
-                  class="detail-expand-btn"
-                  id="fairyNavExpandBtn"
-                >
-                  크게 보기
-                </button>
-                <button
-                  type="button"
-                  class="detail-close-btn"
-                  id="fairyNavCloseBtn"
-                  aria-label="길안내 닫기"
-                >
-                  ✕
-                </button>
+                <button type="button" class="detail-expand-btn" id="fairyNavExpandBtn">크게 보기</button>
+                <button type="button" class="detail-close-btn" id="fairyNavCloseBtn" aria-label="길안내 닫기">✕</button>
               </div>
             </div>
           </div>
@@ -473,7 +383,100 @@
       <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
     </main>
 
-    <!-- 2. '오늘의 생존 카드 8종' & 세부 조건 통합 모달 (#filterModal) -->
+    <!-- 2. '지갑 든 요정' 클릭 시 열리는 [내 지갑 사정 (원하는 가격대)] 모달 (#walletModal) -->
+    <div
+      class="modal-backdrop"
+      id="walletModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="walletModalTitle"
+      hidden
+    >
+      <div class="filter-modal-sheet wallet-modal-sheet">
+        <div class="fmodal-header">
+          <div>
+            <h2 class="fmodal-title" id="walletModalTitle">오늘 내 지갑 사정은?</h2>
+            <p class="fmodal-sub">원하는 가격대를 고르면 예산에 맞는 식당만 지도에 남겨드려요</p>
+          </div>
+          <button type="button" class="fmodal-close-btn" id="closeWalletModalBtn" aria-label="닫기">✕</button>
+        </div>
+
+        <div class="fmodal-body wallet-modal-body">
+          <!-- 요정 + 현재 선택된 예산 상태 표시 -->
+          <div class="wallet-fairy-stage">
+            <img
+              src="./assets/fairy/fairy-broke.png"
+              alt="지갑을 벌리고 있는 요정"
+              class="wfs-img"
+              draggable="false"
+            />
+            <div class="wfs-info">
+              <span class="wfs-kicker">선택한 예산 기준</span>
+              <strong class="wfs-price-display" id="walletCurrentDisplay">전체 가격대</strong>
+              <span class="wfs-match-count" id="walletMatchCountText">캠퍼스 전체 맛집 표시 중</span>
+            </div>
+          </div>
+
+          <!-- 원터치 가격대 프리셋 그리드 -->
+          <div class="wallet-preset-grid" id="walletPresetGrid" role="radiogroup" aria-label="가격대 선택">
+            <button type="button" class="wallet-preset-card is-active" data-wallet-max="">
+              <strong>전체 가격대</strong>
+              <span>가격 제한 없이 모두 보기</span>
+            </button>
+            <button type="button" class="wallet-preset-card" data-wallet-max="5500">
+              <strong>5,500원 이하</strong>
+              <span>천원의 아침밥 · 학식 · 김밥 · 알밥</span>
+            </button>
+            <button type="button" class="wallet-preset-card" data-wallet-max="7000">
+              <strong>7,000원 이하</strong>
+              <span>뚝배기 · 칼국수 · 수제버거 · 부리또</span>
+            </button>
+            <button type="button" class="wallet-preset-card" data-wallet-max="8500">
+              <strong>8,500원 이하</strong>
+              <span>부타동 · 우동 · 마라탕 · 손만두</span>
+            </button>
+            <button type="button" class="wallet-preset-card" data-wallet-max="10000">
+              <strong>10,000원 이하</strong>
+              <span>텐동 · 파스타 · 백반 · 수육국밥</span>
+            </button>
+            <button type="button" class="wallet-preset-card" data-wallet-max="refill">
+              <strong>무한리필 · 배터지게</strong>
+              <span>밥·사리·고기 리필 &amp; 곱빼기 무료</span>
+            </button>
+          </div>
+
+          <!-- 정밀 금액 슬라이더 -->
+          <div class="wallet-slider-box">
+            <div class="wsb-head">
+              <label for="walletRangeInput">직접 상한 금액 조절</label>
+              <strong id="walletSliderValueLabel">제한 없음</strong>
+            </div>
+            <input
+              type="range"
+              id="walletRangeInput"
+              class="wallet-range-input"
+              min="3000"
+              max="16000"
+              step="500"
+              value="16000"
+            />
+            <div class="wsb-ticks">
+              <span>3,000원</span>
+              <span>7,000원</span>
+              <span>10,000원</span>
+              <span>16,000원(전체)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fmodal-footer">
+          <button type="button" class="fmodal-reset-btn" id="walletResetBtn">제한 해제</button>
+          <button type="button" class="fmodal-apply-btn" id="walletApplyBtn">맛집 보기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 세부 조건 & 상황별 추천 모달 (#filterModal) -->
     <div
       class="modal-backdrop"
       id="filterModal"
@@ -485,104 +488,78 @@
       <div class="filter-modal-sheet">
         <div class="fmodal-header">
           <div>
-            <h2 class="fmodal-title" id="filterModalTitle">🎯 맞춤필터 &amp; 생존 카드</h2>
-            <p class="fmodal-sub">상황별 원터치 생존 카드나 세부 조건을 골라보세요</p>
+            <h2 class="fmodal-title" id="filterModalTitle">맞춤 필터</h2>
+            <p class="fmodal-sub">상황별 테마와 업종·거리 조건을 선택하세요</p>
           </div>
-          <button type="button" class="fmodal-close-btn" id="closeFilterModalBtn" aria-label="모달 닫기">
-            ✕
-          </button>
+          <button type="button" class="fmodal-close-btn" id="closeFilterModalBtn" aria-label="모달 닫기">✕</button>
         </div>
 
         <div class="fmodal-body">
-          <!-- 텅 빈 지갑 요정 히어로 배너 -->
-          <div class="modal-fairy-hero">
-            <img
-              src="./assets/fairy/fairy-broke.png"
-              alt="지갑 벌리고 놀란 요정"
-              class="mfh-broke-img"
-              draggable="false"
-            />
-            <div class="mfh-copy">
-              <strong>“헉… 내 지갑 실화야?!” 💸</strong>
-              <span>걱정 마세요! 천원의 아침밥부터 무한리필까지 요정이 딱 골라드려요</span>
-            </div>
-          </div>
-
-          <!-- A. 오늘 내 지갑·배고픔 상태는? (생존 카드 8종) -->
           <section class="fmodal-section">
             <div class="fsec-head">
-              <h3 class="fsec-title">오늘 내 지갑·배고픔 상태는?</h3>
+              <h3 class="fsec-title">상황별 빠른 테마</h3>
               <span class="fsec-caption">다시 누르면 해제</span>
             </div>
             <div class="survival-grid" id="survivalGrid"></div>
           </section>
 
-          <!-- B-0. 방문 시각 시뮬레이터 연동 -->
           <section class="fmodal-section">
             <div class="fsec-head">
               <h3 class="fsec-title">방문 예정 시각 (KST)</h3>
               <label class="inline-open-toggle">
                 <input type="checkbox" id="modalOpenOnlyCheckbox" />
-                <span>해당 시각 영업 중만</span>
+                <span>영업 중만</span>
               </label>
             </div>
             <div class="fmodal-chips" id="modalTimePresets">
-              <button type="button" class="mchip is-active" data-modal-time="now">지금(실시간)</button>
+              <button type="button" class="mchip is-active" data-modal-time="now">지금</button>
               <button type="button" class="mchip" data-modal-time="08:40">아침 08:40</button>
               <button type="button" class="mchip" data-modal-time="12:30">점심 12:30</button>
-              <button type="button" class="mchip" data-modal-time="15:30">오후 공강 15:30</button>
+              <button type="button" class="mchip" data-modal-time="15:30">공강 15:30</button>
               <button type="button" class="mchip" data-modal-time="18:00">저녁 18:00</button>
               <button type="button" class="mchip" data-modal-time="22:30">야식 22:30</button>
             </div>
           </section>
 
-          <!-- B-1. 업종 멀티 선택 칩 -->
           <section class="fmodal-section">
             <div class="fsec-head">
-              <h3 class="fsec-title">업종 선택 (다중 선택 가능)</h3>
+              <h3 class="fsec-title">업종 선택</h3>
             </div>
             <div class="fmodal-chips" id="modalCategoryChips"></div>
           </section>
 
-          <!-- B-2. 거리 반경 칩 -->
           <section class="fmodal-section">
             <div class="fsec-head">
               <h3 class="fsec-title">거리 반경</h3>
-              <span class="fsec-caption" id="modalRadiusAnchorHint">기준: 대표 기준점</span>
+              <span class="fsec-caption" id="modalRadiusAnchorHint">기준: 정문</span>
             </div>
             <div class="fmodal-chips" id="modalDistanceChips">
-              <button type="button" class="mchip is-active" data-radius="">거리 무관</button>
+              <button type="button" class="mchip is-active" data-radius="">전체 거리</button>
               <button type="button" class="mchip" data-radius="300">300m 이내</button>
               <button type="button" class="mchip" data-radius="500">500m 이내</button>
               <button type="button" class="mchip" data-radius="1000">1km 이내</button>
             </div>
           </section>
 
-          <!-- B-3. 가격 신뢰도 옵션 -->
           <section class="fmodal-section">
             <label class="confirmed-price-check">
               <input type="checkbox" id="confirmedPriceOnlyCheckbox" />
               <div class="cpc-text">
                 <strong>확정 가격 매장만 보기</strong>
-                <span>공식·검증 단가가 확인된 식당만 표시합니다</span>
+                <span>검증된 단가가 확인된 식당만 표시합니다</span>
               </div>
             </label>
           </section>
         </div>
 
-        <!-- C. 모달 하단 고정 액션바 -->
         <div class="fmodal-footer">
-          <button type="button" class="fmodal-reset-btn" id="modalResetBtn">
-            초기화
-          </button>
-          <button type="button" class="fmodal-apply-btn" id="modalApplyBtn">
-            조건에 맞는 맛집 28곳 보기
-          </button>
+          <button type="button" class="fmodal-reset-btn" id="modalResetBtn">초기화</button>
+          <button type="button" class="fmodal-apply-btn" id="modalApplyBtn">맛집 보기</button>
         </div>
       </div>
     </div>
 
-    <!-- 3. 우측 상단 ☰ 메뉴 모달 (#menuModal) -->
+    <!-- 4. 메뉴 & 구글 시트 연동 모달 (#menuModal) -->
     <div
       class="modal-backdrop"
       id="menuModal"
@@ -594,85 +571,78 @@
       <div class="filter-modal-sheet menu-modal-sheet">
         <div class="fmodal-header">
           <div>
-            <h2 class="fmodal-title" id="menuModalTitle">🍚 경희대 거지맵 메뉴</h2>
-            <p class="fmodal-sub">학우들의 제보로 함께 채워가는 서울·국제캠 가성비 지도</p>
+            <h2 class="fmodal-title" id="menuModalTitle">경희대 거지맵 설정 · 제보</h2>
+            <p class="fmodal-sub">서울캠 · 국제캠 가성비 맛집 데이터 관리</p>
           </div>
-          <button type="button" class="fmodal-close-btn" id="closeMenuModalBtn" aria-label="메뉴 닫기">
-            ✕
-          </button>
+          <button type="button" class="fmodal-close-btn" id="closeMenuModalBtn" aria-label="메뉴 닫기">✕</button>
         </div>
 
         <div class="fmodal-body menu-modal-body">
-          <!-- 제보 및 기능 바로가기 액션 -->
           <div class="menu-action-list">
             <button type="button" class="menu-action-card is-primary" id="menuOpenNewPlaceBtn">
-              <span class="mac-icon" aria-hidden="true">➕</span>
+              <span class="mac-icon" aria-hidden="true">＋</span>
               <div class="mac-text">
                 <strong>새 가성비 맛집 제보하기</strong>
-                <span>나만 아는 회기·외대·영통 숨은 혜자 밥집을 추천해주세요</span>
+                <span>회기·외대·영통 숨은 가성비 식당을 알려주세요</span>
               </div>
               <span class="mac-arrow" aria-hidden="true">›</span>
             </button>
 
             <button type="button" class="menu-action-card" id="menuOpenPriceReportBtn">
-              <span class="mac-icon" aria-hidden="true">💰</span>
+              <span class="mac-icon" aria-hidden="true">✎</span>
               <div class="mac-text">
-                <strong>가격·정보 오류 제보하기</strong>
-                <span>메뉴 가격 인상, 브레이크타임 변경, 폐업 소식을 알려주세요</span>
+                <strong>가격·영업시간 수정 제보</strong>
+                <span>메뉴판 변동이나 휴무 정보 변경을 제보해 주세요</span>
               </div>
               <span class="mac-arrow" aria-hidden="true">›</span>
             </button>
 
             <button type="button" class="menu-action-card" id="menuOpenSurvivalBtn">
-              <span class="mac-icon" aria-hidden="true">🎯</span>
+              <span class="mac-icon" aria-hidden="true">≡</span>
               <div class="mac-text">
-                <strong>오늘의 생존 카드 8종 &amp; 맞춤필터</strong>
-                <span>통장 비상·천원의아침밥·공강 혼밥·해장 코스 원터치 필터</span>
+                <strong>맞춤 필터 열기</strong>
+                <span>상황별 테마 · 업종 · 반경 조건 설정</span>
               </div>
               <span class="mac-arrow" aria-hidden="true">›</span>
             </button>
           </div>
 
-          <!-- 📊 거지맵 데이터 현황 요약 카드 -->
-          <section class="menu-stats-section" aria-label="거지맵 데이터 현황">
+          <section class="menu-stats-section" aria-label="데이터 현황">
             <div class="fsec-head">
-              <h3 class="fsec-title">📊 거지맵 데이터 현황</h3>
-              <span class="fsec-caption" id="menuVerifiedDateLabel">기준일 2026-11-12</span>
+              <h3 class="fsec-title">등록 현황</h3>
+              <span class="fsec-caption" id="menuVerifiedDateLabel">기준일 2026-11-16</span>
             </div>
             <div class="menu-stats-grid">
               <div class="mstat-box">
-                <span class="mstat-label">전체 등록 맛집</span>
+                <span class="mstat-label">전체 맛집</span>
                 <strong class="mstat-value" id="statTotalPlaces">38곳</strong>
               </div>
               <div class="mstat-box">
-                <span class="mstat-label">서울캠 / 국제캠</span>
+                <span class="mstat-label">서울 / 국제</span>
                 <strong class="mstat-value" id="statCampusSplit">28 / 10곳</strong>
               </div>
               <div class="mstat-box is-emerald">
-                <span class="mstat-label">6천원대 초가성비</span>
+                <span class="mstat-label">6천원 이하</span>
                 <strong class="mstat-value" id="statUltraBudget">0곳</strong>
               </div>
               <div class="mstat-box is-crimson">
-                <span class="mstat-label">내가 찜한 맛집</span>
+                <span class="mstat-label">저장한 곳</span>
                 <strong class="mstat-value" id="statMyBookmarks">0곳</strong>
               </div>
             </div>
             <div class="menu-my-reports-bar" id="menuMyReportsBar" hidden></div>
           </section>
 
-          <!-- 📗 구글 시트 실시간 자동 동기화 패널 -->
           <section class="menu-sheet-sync-section" aria-label="구글 시트 실시간 연동">
             <div class="fsec-head">
               <div class="mss-title-group">
-                <h3 class="fsec-title">📗 구글 시트 실시간 연동</h3>
-                <span class="mss-status-badge" id="sheetSyncStatusBadge">내장 data.csv</span>
+                <h3 class="fsec-title">Google 시트 실시간 연동</h3>
+                <span class="mss-status-badge" id="sheetSyncStatusBadge">기본 데이터</span>
               </div>
-              <button type="button" class="mss-refresh-btn" id="btnSyncSheetNow" title="시트 최신 데이터 즉시 불러오기">
-                🔄 새로고침
-              </button>
+              <button type="button" class="mss-refresh-btn" id="btnSyncSheetNow">새로고침</button>
             </div>
             <p class="mss-desc">
-              구글 시트(<code>링크가 있는 모든 사용자 · 뷰어</code> 또는 <code>웹에 게시 CSV</code>) 주소를 연결하면, 시트에서 식당을 수정·추가할 때마다 바로 반영됩니다.
+              구글 스프레드시트(<code>링크가 있는 모든 사용자 · 뷰어</code>) 주소를 연결하면 시트 수정 내용이 즉시 반영됩니다.
             </p>
             <div class="mss-input-row">
               <input
@@ -687,26 +657,24 @@
               <button type="button" class="mss-clear-btn" id="btnClearSheetUrl" hidden>해제</button>
             </div>
             <div class="mss-code-bar" id="sheetCodeHelperBar" hidden>
-              <span class="mss-code-hint">배포용(GitHub Pages) 영구 반영:</span>
+              <span class="mss-code-hint">배포용 영구 반영:</span>
               <button type="button" class="mss-copy-code-btn" id="btnCopyAppJsSheetCode">
-                📋 app.js 1번 줄 코드 복사
+                app.js 1번 줄 복사
               </button>
             </div>
           </section>
 
-          <!-- 데이터 기준일 및 안내 문구 -->
           <div class="menu-disclaimer-box">
-            <p class="mdb-line-strong">📌 이용 안내 및 데이터 기준</p>
+            <p class="mdb-line-strong">이용 안내</p>
             <p class="mdb-line">
-              학생식당 및 매장 사정에 따라 실제 가격·영업시간이 일부 다를 수 있습니다.
-              현장에서 변경된 메뉴판을 발견하시면 언제든 제보해 주세요!
+              매장 사정에 따라 실제 가격·영업시간이 일부 다를 수 있습니다. 변동 사항은 제보 버튼이나 연동 시트로 업데이트할 수 있습니다.
             </p>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 4. 가격 수정 · 새 맛집 추천 제보 모달 (#reportModal) -->
+    <!-- 5. 가격 수정 · 새 맛집 추천 제보 모달 (#reportModal) -->
     <div
       class="modal-backdrop"
       id="reportModal"
@@ -718,15 +686,12 @@
       <div class="filter-modal-sheet report-modal-sheet">
         <div class="fmodal-header">
           <div>
-            <h2 class="fmodal-title" id="reportModalTitle">📮 거지맵 가격·맛집 제보</h2>
-            <p class="fmodal-sub">제출 시 운영진 시트 반영용 요약 및 CSV 포맷이 자동 복사됩니다</p>
+            <h2 class="fmodal-title" id="reportModalTitle">정보 수정 · 맛집 제보</h2>
+            <p class="fmodal-sub">제출 시 시트 붙여넣기용 데이터가 클립보드에 복사됩니다</p>
           </div>
-          <button type="button" class="fmodal-close-btn" id="closeReportModalBtn" aria-label="제보 모달 닫기">
-            ✕
-          </button>
+          <button type="button" class="fmodal-close-btn" id="closeReportModalBtn" aria-label="제보 모달 닫기">✕</button>
         </div>
 
-        <!-- 2가지 제보 탭 스위치 -->
         <div class="report-tabs" role="tablist" aria-label="제보 유형 선택">
           <button
             type="button"
@@ -736,7 +701,7 @@
             role="tab"
             aria-selected="true"
           >
-            💰 가격·영업시간 수정 제보
+            가격·영업시간 수정
           </button>
           <button
             type="button"
@@ -746,70 +711,45 @@
             role="tab"
             aria-selected="false"
           >
-            ➕ 나만의 가성비 맛집 추천
+            새 맛집 추천
           </button>
         </div>
 
         <div class="fmodal-body report-modal-body">
-          <!-- 탭 1: 가격·영업시간 수정 제보 폼 -->
           <form id="reportModifyForm" class="report-form" novalidate>
             <input type="hidden" id="repModPlaceId" value="" />
-
             <div class="rfield">
-              <label for="repModPlaceName" class="rlabel">
-                식당명 <span class="req-mark">*</span>
-              </label>
+              <label for="repModPlaceName" class="rlabel">식당명 <span class="req-mark">*</span></label>
               <input
                 type="text"
                 id="repModPlaceName"
                 class="rinput"
                 list="reportPlaceDatalist"
-                placeholder="식당 이름을 입력하거나 선택해주세요"
+                placeholder="식당 이름 입력 또는 선택"
                 autocomplete="off"
                 required
               />
               <datalist id="reportPlaceDatalist"></datalist>
             </div>
-
             <div class="rep-current-box" id="repModCurrentBox" hidden></div>
-
             <div class="rfield">
-              <label for="repModPriceMenu" class="rlabel">변경된 메뉴·가격 제보</label>
-              <input
-                type="text"
-                id="repModPriceMenu"
-                class="rinput"
-                placeholder="예: 등심돈까스카레 8,500원 / 라볶이 5,000원"
-              />
+              <label for="repModPriceMenu" class="rlabel">변경된 메뉴·가격</label>
+              <input type="text" id="repModPriceMenu" class="rinput" placeholder="예: 돈까스카레 9,500원" />
             </div>
-
             <div class="rfield">
-              <label for="repModHours" class="rlabel">영업시간·브레이크타임 변경사항</label>
-              <input
-                type="text"
-                id="repModHours"
-                class="rinput"
-                placeholder="예: 15:00~16:30 브레이크타임 생김 / 토요일 휴무"
-              />
+              <label for="repModHours" class="rlabel">영업시간·브레이크타임 변경</label>
+              <input type="text" id="repModHours" class="rinput" placeholder="예: 15:00~17:00 브레이크타임" />
             </div>
-
             <label class="rep-closed-check">
               <input type="checkbox" id="repModClosedCheck" />
-              <span>⚠️ 이 식당이 폐업했거나 다른 곳으로 이전했어요</span>
+              <span>이 식당이 폐업했거나 이전했어요</span>
             </label>
-
             <div class="rfield">
-              <label for="repModNote" class="rlabel">추가 학우 참고 팁 (선택)</label>
-              <input
-                type="text"
-                id="repModNote"
-                class="rinput"
-                placeholder="예: 현금/계좌이체 시 음료 서비스 있어요"
-              />
+              <label for="repModNote" class="rlabel">참고 팁 (선택)</label>
+              <input type="text" id="repModNote" class="rinput" placeholder="예: 계좌이체 시 음료 서비스" />
             </div>
           </form>
 
-          <!-- 탭 2: 나만의 가성비 맛집 추천 폼 -->
           <form id="reportNewForm" class="report-form" novalidate hidden>
             <div class="rfield-grid-2">
               <div class="rfield">
@@ -836,95 +776,57 @@
               <div class="rfield">
                 <label for="repNewCategory" class="rlabel">업종</label>
                 <select id="repNewCategory" class="rselect">
-                  <option value="한식·백반">🍚 한식·백반</option>
-                  <option value="분식">🍙 분식</option>
-                  <option value="국수·면">🍜 국수·면</option>
-                  <option value="돈가스·일식">🍱 돈가스·일식</option>
-                  <option value="중식·마라">🌶️ 중식·마라</option>
-                  <option value="양식">🍝 양식</option>
-                  <option value="고기·무한리필">🥩 고기·무한리필</option>
-                  <option value="가성비술집">🍺 가성비술집</option>
-                  <option value="학식">🎓 학식</option>
+                  <option value="한식·백반">한식·백반</option>
+                  <option value="분식">분식</option>
+                  <option value="국수·면">국수·면</option>
+                  <option value="돈가스·일식">돈가스·일식</option>
+                  <option value="중식·마라">중식·마라</option>
+                  <option value="양식">양식</option>
+                  <option value="고기·무한리필">고기·무한리필</option>
+                  <option value="가성비술집">가성비술집</option>
+                  <option value="학식">학식</option>
                 </select>
               </div>
               <div class="rfield">
-                <label for="repNewMinPrice" class="rlabel">대표 최저가(숫자)</label>
-                <input
-                  type="number"
-                  id="repNewMinPrice"
-                  class="rinput"
-                  min="500"
-                  step="100"
-                  placeholder="예: 6500"
-                />
+                <label for="repNewMinPrice" class="rlabel">최저 식사가(원)</label>
+                <input type="number" id="repNewMinPrice" class="rinput" min="500" step="100" placeholder="예: 7000" />
               </div>
             </div>
 
             <div class="rfield">
-              <label for="repNewName" class="rlabel">
-                식당명 <span class="req-mark">*</span>
-              </label>
-              <input
-                type="text"
-                id="repNewName"
-                class="rinput"
-                placeholder="추천할 식당 이름을 입력해주세요"
-                required
-              />
+              <label for="repNewName" class="rlabel">식당명 <span class="req-mark">*</span></label>
+              <input type="text" id="repNewName" class="rinput" placeholder="추천할 식당 이름" required />
             </div>
 
             <div class="rfield">
-              <label for="repNewMenuPrice" class="rlabel">
-                대표 메뉴와 가격 <span class="req-mark">*</span>
-              </label>
-              <input
-                type="text"
-                id="repNewMenuPrice"
-                class="rinput"
-                placeholder="예: 제육볶음 백반 6,500원 · 순두부찌개 6,000원"
-                required
-              />
+              <label for="repNewMenuPrice" class="rlabel">대표 메뉴와 가격 <span class="req-mark">*</span></label>
+              <input type="text" id="repNewMenuPrice" class="rinput" placeholder="예: 제육백반 7,000원" required />
             </div>
 
             <div class="rfield">
-              <label for="repNewPerks" class="rlabel">리필·곱빼기 등 가성비 포인트</label>
-              <input
-                type="text"
-                id="repNewPerks"
-                class="rinput"
-                placeholder="예: 공기밥·반찬 무한리필, 1인 혼밥석 완비"
-              />
+              <label for="repNewPerks" class="rlabel">가성비 혜택</label>
+              <input type="text" id="repNewPerks" class="rinput" placeholder="예: 공기밥 무한리필" />
             </div>
 
             <div class="rfield">
-              <label for="repNewAddress" class="rlabel">위치 설명 또는 주소 (선택)</label>
-              <input
-                type="text"
-                id="repNewAddress"
-                class="rinput"
-                placeholder="예: 서울캠 정문 도보 3분 골목 / 영통역 1번출구 근처"
-              />
+              <label for="repNewAddress" class="rlabel">위치/주소 (선택)</label>
+              <input type="text" id="repNewAddress" class="rinput" placeholder="예: 정문 도보 3분" />
             </div>
           </form>
 
-          <!-- 제출 후 요약 & CSV 복사 완료 미리보기 박스 -->
           <div class="rep-preview-result" id="repPreviewResult" hidden>
             <div class="rpr-head">
-              <strong>✅ 클립보드 복사 &amp; 로컬 제보함 저장 완료!</strong>
+              <strong>클립보드 복사 완료</strong>
               <button type="button" class="rpr-recopy-btn" id="repRecopyBtn">다시 복사</button>
             </div>
-            <p class="rpr-guide">구글시트(<code>geojimap_master</code>)나 오픈채팅에 바로 붙여넣기 할 수 있어요.</p>
+            <p class="rpr-guide">연동된 구글 시트에 바로 붙여넣기 할 수 있습니다.</p>
             <pre class="rpr-code" id="repPreviewCode"></pre>
           </div>
         </div>
 
         <div class="fmodal-footer">
-          <button type="button" class="fmodal-reset-btn" id="cancelReportModalBtn">
-            닫기
-          </button>
-          <button type="button" class="fmodal-apply-btn" id="submitReportBtn">
-            📋 클립보드 복사 &amp; 제보 저장
-          </button>
+          <button type="button" class="fmodal-reset-btn" id="cancelReportModalBtn">닫기</button>
+          <button type="button" class="fmodal-apply-btn" id="submitReportBtn">클립보드 복사 &amp; 저장</button>
         </div>
       </div>
     </div>
@@ -938,12 +840,15 @@
   ></script>
 
   <!-- KST 영업시간 & 다중 브레이크타임 엔진 -->
-  <script src="./hours.js?v=20261114"></script>
+  <script src="./hours.js?v=20261117"></script>
 
-  <!-- 3D 요정 마스코트 & 실시간 도보 길안내 엔진 -->
-  <script src="./nav-fairy.js?v=20261114"></script>
+  <!-- 38개 매장 대표 이미지 & 상세 메뉴판 데이터 -->
+  <script src="./menus.js?v=20261117"></script>
+
+  <!-- 3D 요정 마스코트 & 실시간 GPS 도보 길안내 엔진 -->
+  <script src="./nav-fairy.js?v=20261117"></script>
 
   <!-- 메인 애플리케이션 -->
-  <script src="./app.js?v=20261114"></script>
+  <script src="./app.js?v=20261117"></script>
 </body>
 </html>
