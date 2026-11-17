@@ -36,7 +36,7 @@
   />
 
   <!-- App Stylesheet -->
-  <link rel="stylesheet" href="./style.css?v=20261117" />
+  <link rel="stylesheet" href="./style.css?v=20261117d" />
 </head>
 <body>
   <div class="app-shell" id="appShell">
@@ -134,39 +134,32 @@
           </button>
         </div>
 
-        <!-- 1-2) Google Maps 스타일 심플 가로 스크롤 칩 바 -->
-        <div class="quick-chips-row" id="quickChipsRow" role="toolbar" aria-label="빠른 조건 필터">
-          <button type="button" class="qchip" id="chipOpenOnly">
-            <span class="qchip-dot"></span>
-            <span>영업 중</span>
+        <!-- 1-2) 검색창 하단 핵심 4개 선택창: [전체(권역)] · [시간대별(기본: 현재 영업중)] · [저장됨] · [필터] -->
+        <div class="quick-chips-row is-four-chips" id="quickChipsRow" role="toolbar" aria-label="핵심 조건 선택">
+          <button
+            type="button"
+            class="qchip"
+            id="chipZoneSelect"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            <span id="chipZoneSelectLabel">전체 ▾</span>
           </button>
 
-          <button type="button" class="qchip" id="chipWalletBudget">
-            <span id="chipWalletBudgetLabel">지갑사정 ▾</span>
-          </button>
-
-          <button type="button" class="qchip" id="chipRefillOnly">
-            리필·곱빼기
+          <button
+            type="button"
+            class="qchip is-active"
+            id="chipVisitTime"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            <span class="qchip-dot is-live"></span>
+            <span id="chipVisitTimeLabel">영업 중 ▾</span>
           </button>
 
           <button type="button" class="qchip" id="chipBookmarkedOnly">
             <span id="chipBookmarkedLabel">저장됨</span>
           </button>
-
-          <button
-            type="button"
-            class="qchip"
-            id="chipVisitTime"
-            aria-haspopup="true"
-            aria-expanded="false"
-          >
-            <span id="chipVisitTimeLabel">지금 방문 ▾</span>
-          </button>
-
-          <span class="qchip-divider" aria-hidden="true"></span>
-
-          <!-- 캠퍼스별 권역 칩 슬롯 -->
-          <div class="zone-chips-inline" id="zoneChipsInline"></div>
 
           <button
             type="button"
@@ -180,11 +173,30 @@
           </button>
         </div>
 
-        <!-- 방문 시각 선택 미니 팝오버 -->
-        <div class="visit-time-popover" id="visitTimePopover" role="dialog" aria-label="방문 예정 시각 선택" hidden>
+        <!-- 권역 선택 미니 팝오버 (서울캠: 전체 / 교내(정문) / 회기역 / 후문·외대 | 국제캠: 전체 / 교내 / 정건 / 중상·영통) -->
+        <div class="zone-select-popover" id="zoneSelectPopover" role="dialog" aria-label="권역 선택" hidden>
           <div class="vtp-head">
-            <span class="vtp-title">방문 예정 시각 (KST)</span>
+            <span class="vtp-title" id="zspTitle">권역 선택</span>
+            <button type="button" class="vtp-close" id="zspCloseBtn" aria-label="닫기">✕</button>
+          </div>
+          <div class="zsp-options-grid" id="zonePopoverOptions"></div>
+        </div>
+
+        <!-- 시간대별 설정 미니 팝오버 (기본: 현재 영업 중) -->
+        <div class="visit-time-popover" id="visitTimePopover" role="dialog" aria-label="시간대별 영업 설정" hidden>
+          <div class="vtp-head">
+            <span class="vtp-title">시간대별 영업 설정 (KST)</span>
             <button type="button" class="vtp-close" id="vtpCloseBtn" aria-label="닫기">✕</button>
+          </div>
+
+          <!-- 영업 중 필터 스위치 (기본 ON) -->
+          <div class="vtp-open-mode-bar" role="group" aria-label="영업 상태 표시 범위">
+            <button type="button" class="vtp-open-btn is-active" id="vtpBtnOpenOnly" data-open-mode="open">
+              ● 영업 중인 곳만
+            </button>
+            <button type="button" class="vtp-open-btn" id="vtpBtnShowAll" data-open-mode="all">
+              영업종료 포함 전체
+            </button>
           </div>
 
           <div class="vtp-day-row" role="group" aria-label="요일 기준 선택">
@@ -229,23 +241,28 @@
         </div>
       </div>
 
-      <!-- 좌하단 떠 있는 '지갑 든 요정' 플로팅 버튼 (클릭 시 지갑사정 가격대 선택!) -->
+      <!-- 좌하단 크게 빛나는 '지갑 든 요정' 플로팅 마스코트 (클릭 시 지갑사정 가격대 선택!) -->
       <button
         type="button"
-        class="broke-fairy-float-btn"
+        class="broke-fairy-float-btn is-hero-glow"
         id="brokeFairyHelperBtn"
         aria-haspopup="dialog"
         aria-controls="walletModal"
         aria-label="내 지갑 사정(원하는 가격대) 선택하기"
         title="클릭해서 내 지갑 사정(예산)을 선택해 보세요!"
       >
-        <img
-          src="./assets/fairy/fairy-broke.png"
-          alt="지갑을 벌리고 놀란 요정"
-          class="bff-img"
-          draggable="false"
-        />
-        <span class="bff-bubble">
+        <span class="bff-fairy-stage" aria-hidden="true">
+          <span class="bff-glow-outer"></span>
+          <span class="bff-glow-inner"></span>
+          <span class="bff-sparkles">✦</span>
+          <img
+            src="./assets/fairy/fairy-broke.png"
+            alt=""
+            class="bff-img"
+            draggable="false"
+          />
+        </span>
+        <span class="bff-pill-caption">
           <strong id="brokeFairyBudgetTitle">내 지갑사정</strong>
           <span id="brokeFairyBudgetSub">가격대 선택</span>
         </span>
@@ -615,11 +632,11 @@
             <div class="menu-stats-grid">
               <div class="mstat-box">
                 <span class="mstat-label">전체 맛집</span>
-                <strong class="mstat-value" id="statTotalPlaces">38곳</strong>
+                <strong class="mstat-value" id="statTotalPlaces">65곳</strong>
               </div>
               <div class="mstat-box">
                 <span class="mstat-label">서울 / 국제</span>
-                <strong class="mstat-value" id="statCampusSplit">28 / 10곳</strong>
+                <strong class="mstat-value" id="statCampusSplit">48 / 17곳</strong>
               </div>
               <div class="mstat-box is-emerald">
                 <span class="mstat-label">6천원 이하</span>
@@ -840,15 +857,15 @@
   ></script>
 
   <!-- KST 영업시간 & 다중 브레이크타임 엔진 -->
-  <script src="./hours.js?v=20261117"></script>
+  <script src="./hours.js?v=20261117c"></script>
 
-  <!-- 38개 매장 대표 이미지 & 상세 메뉴판 데이터 -->
-  <script src="./menus.js?v=20261117"></script>
+  <!-- 65개 매장 대표 음식 이미지 & 상세 메뉴판 데이터 -->
+  <script src="./menus.js?v=20261117c"></script>
 
   <!-- 3D 요정 마스코트 & 실시간 GPS 도보 길안내 엔진 -->
-  <script src="./nav-fairy.js?v=20261117"></script>
+  <script src="./nav-fairy.js?v=20261117c"></script>
 
   <!-- 메인 애플리케이션 -->
-  <script src="./app.js?v=20261117"></script>
+  <script src="./app.js?v=20261117c"></script>
 </body>
 </html>

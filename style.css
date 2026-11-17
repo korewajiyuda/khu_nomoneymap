@@ -284,7 +284,7 @@ body {
   top: 8px;
   left: 0;
   right: 0;
-  z-index: 520;
+  z-index: 590;
   pointer-events: none;
 }
 
@@ -4291,6 +4291,7 @@ body {
 }
 
 .gmap-omnibox {
+  pointer-events: auto;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -4387,6 +4388,11 @@ body {
 }
 
 /* 3) Google Material 3 심플 가로 필터 칩 */
+.quick-chips-row,
+.visit-time-popover {
+  pointer-events: auto;
+}
+
 .quick-chips-row {
   gap: 6px;
   padding: 2px 2px 4px;
@@ -5230,4 +5236,260 @@ body {
 
 .fnav-step-item.is-current .fnav-step-num {
   background-color: #1A73E8;
+}
+
+/* ==========================================================================
+   4개 핵심 칩 바 (전체/시간대별/저장됨/필터) & 크게 빛나는 지갑 요정 마스코트
+   ========================================================================== */
+
+.quick-chips-row.is-four-chips {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 2px 0 4px;
+  overflow: visible;
+}
+
+.quick-chips-row.is-four-chips .qchip {
+  width: 100%;
+  justify-content: center;
+  padding: 0 6px;
+  height: 34px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qchip-dot.is-live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #188038;
+  box-shadow: 0 0 0 2px rgba(24, 128, 56, 0.2);
+  flex-shrink: 0;
+}
+
+/* 권역 선택 미니 팝오버 (#zoneSelectPopover) */
+.zone-select-popover {
+  pointer-events: auto;
+  margin-top: 6px;
+  padding: 12px;
+  border-radius: 16px;
+  background-color: #FFFFFF;
+  border: 1px solid #DADCE0;
+  box-shadow: 0 8px 24px rgba(60, 64, 67, 0.22);
+}
+
+.zsp-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.zsp-option-btn {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #DADCE0;
+  background-color: #FFFFFF;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
+}
+
+.zsp-option-btn strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #202124;
+}
+
+.zsp-option-btn span {
+  font-size: 11px;
+  color: #5F6368;
+}
+
+.zsp-option-btn.is-active {
+  background-color: #E8F0FE;
+  border-color: #1A73E8;
+}
+
+.zsp-option-btn.is-active strong {
+  color: #1967D2;
+}
+
+/* 시간대별 팝오버 내 [영업 중인 곳만 | 영업종료 포함 전체] 스위치 */
+.vtp-open-mode-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 4px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background-color: #F1F3F4;
+}
+
+.vtp-open-btn {
+  appearance: none;
+  height: 32px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: #5F6368;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.vtp-open-btn.is-active {
+  background-color: #FFFFFF;
+  color: #188038;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.16);
+}
+
+#vtpBtnShowAll.is-active {
+  color: #1967D2;
+}
+
+/* 좌하단 크게 빛나는 지갑 요정 히어로 마스코트 (#brokeFairyHelperBtn.is-hero-glow) */
+@keyframes walletHaloBreathe {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(0.94);
+    opacity: 0.88;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.12);
+    opacity: 1;
+  }
+}
+
+@keyframes walletSparkleTwinkle {
+  0%, 100% {
+    transform: scale(0.85) rotate(0deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.2) rotate(18deg);
+    opacity: 1;
+  }
+}
+
+.broke-fairy-float-btn.is-hero-glow {
+  z-index: 545;
+  left: 10px;
+  bottom: var(--controls-bottom, 360px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible;
+}
+
+.bff-fairy-stage {
+  position: relative;
+  width: 96px;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* 뒤쪽 넓게 퍼지는 골든·화이트 오로라 후광 */
+.bff-glow-outer {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 251, 235, 0.98) 0%,
+    rgba(253, 224, 71, 0.68) 32%,
+    rgba(96, 165, 250, 0.34) 58%,
+    rgba(255, 255, 255, 0) 76%
+  );
+  filter: blur(4px);
+  animation: walletHaloBreathe 2.6s ease-in-out infinite;
+}
+
+/* 요정 등 뒤 선명한 빛무리 코어 */
+.bff-glow-inner {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    #FFFFFF 0%,
+    rgba(254, 240, 138, 0.92) 52%,
+    rgba(251, 191, 36, 0) 100%
+  );
+  box-shadow: 0 0 24px 8px rgba(253, 224, 71, 0.62), 0 0 42px 14px rgba(59, 130, 246, 0.25);
+}
+
+.bff-sparkles {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  z-index: 4;
+  font-size: 16px;
+  color: #F59E0B;
+  text-shadow: 0 0 8px #FEF08A, 0 0 12px #FFFFFF;
+  animation: walletSparkleTwinkle 2s ease-in-out infinite;
+}
+
+.broke-fairy-float-btn.is-hero-glow .bff-img {
+  position: relative;
+  z-index: 3;
+  width: 86px;
+  height: 86px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(30, 41, 59, 0.26)) drop-shadow(0 0 10px rgba(255, 255, 255, 0.95));
+  animation: fairyGentleBob 2.8s ease-in-out infinite;
+}
+
+.bff-pill-caption {
+  position: relative;
+  z-index: 5;
+  margin-top: -8px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1.5px solid #93C5FD;
+  box-shadow: 0 4px 14px rgba(26, 115, 232, 0.24), 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.bff-pill-caption strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: #202124;
+}
+
+.bff-pill-caption span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1A73E8;
 }

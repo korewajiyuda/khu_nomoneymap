@@ -74,14 +74,14 @@ const REPORT_FORM_URL = "";
         { name: "회기역", lat: 37.58978, lng: 127.05758 },
       ],
       zoneOptions: [
-        { zone: "all", label: "전체" },
-        { zone: "교내", label: "교내(학식)" },
-        { zone: "정문", label: "정문" },
-        { zone: "회기역", label: "회기역" },
-        { zone: "후문·외대", label: "후문·외대" },
+        { zone: "all", label: "전체", desc: "서울캠 전 권역" },
+        { zone: "교내·정문", label: "교내(정문)", desc: "학식 · 정문 앞 골목" },
+        { zone: "회기역", label: "회기역", desc: "회기로 · 파전골목 · 역세권" },
+        { zone: "후문·외대", label: "후문·외대", desc: "경희대 후문 · 외대앞" },
       ],
       anchors: {
         정문: { lat: 37.5927, lng: 127.0519 },
+        "교내·정문": { lat: 37.5927, lng: 127.0519 },
         후문: { lat: 37.596, lng: 127.0575 },
         "후문·외대": { lat: 37.596, lng: 127.0575 },
         회기역: { lat: 37.58978, lng: 127.05758 },
@@ -101,10 +101,10 @@ const REPORT_FORM_URL = "";
         { name: "마을", lat: 37.24685, lng: 127.07645 },
       ],
       zoneOptions: [
-        { zone: "all", label: "전체" },
-        { zone: "교내", label: "교내(학식)" },
-        { zone: "정건", label: "정건" },
-        { zone: "중상·영통", label: "중상·영통" },
+        { zone: "all", label: "전체", desc: "국제캠 전 권역" },
+        { zone: "교내", label: "교내", desc: "학생회관 · 기숙사 학식" },
+        { zone: "정건", label: "정건", desc: "정문 건너편 대학가" },
+        { zone: "중상·영통", label: "중상·영통", desc: "영통역 중심상가" },
       ],
       anchors: {
         정건: { lat: 37.24845, lng: 127.07725 },
@@ -195,17 +195,17 @@ const REPORT_FORM_URL = "";
   function createDefaultFilters() {
     return {
       query: "",
-      openOnly: false,
+      openOnly: true, // 기본 설정: 현재 영업 중인 매장 우선 표시
       bookmarkedOnly: false,
       visitTimeMode: "now", // 'now' | '08:40' | '12:30' | '15:30' | '18:00' | '22:30' | 'custom'
       customVisitTime: "15:30",
       visitDayMode: "today", // 'today' | 'weekday' | 'sat' | 'sun'
-      budget: null, // null | '6000' | '10000'
-      zone: "all", // 'all' | campus zone string
+      budget: null,
+      zone: "all",
       refillOnly: false,
-      survivalCard: null, // null | SURVIVAL_CARDS[i].id
-      categories: new Set(), // multi-select categories
-      maxDistance: null, // null | 300 | 500 | 1000
+      survivalCard: null,
+      categories: new Set(),
+      maxDistance: null,
       confirmedPriceOnly: false,
     };
   }
@@ -1212,16 +1212,19 @@ const REPORT_FORM_URL = "";
   }
 
   function getVisitTimeDisplayLabel() {
+    const f = state.filters;
     if (!isVisitTimeSimulated()) {
-      return "⏰ 지금 방문 ▾";
+      return f.openOnly ? "영업 중 ▾" : "시간대 전체 ▾";
     }
     const kst = window.HoursEngine.getKstParts(getEffectiveRefDate());
     const hhmm = `${String(kst.hour).padStart(2, "0")}:${String(
       kst.minute
     ).padStart(2, "0")}`;
     const dayPrefix =
-      state.filters.visitDayMode === "today" ? "" : `${kst.weekdayKor} `;
-    return `⏰ ${dayPrefix}${hhmm} 방문 ▾`;
+      f.visitDayMode === "today" ? "" : `${kst.weekdayKor} `;
+    return f.openOnly
+      ? `${dayPrefix}${hhmm} 영업 중 ▾`
+      : `${dayPrefix}${hhmm} 전체 ▾`;
   }
 
   /**
@@ -1429,9 +1432,15 @@ const REPORT_FORM_URL = "";
       return { matched: false, biz };
     }
 
-    // 4) 캠퍼스 권역 칩
-    if (f.zone && f.zone !== "all" && place.zone !== f.zone) {
-      return { matched: false, biz };
+    // 4) 캠퍼스 권역 칩 ('교내·정문' 선택 시 교내 및 정문 모두 포함)
+    if (f.zone && f.zone !== "all") {
+      if (f.zone === "교내·정문") {
+        if (place.zone !== "교내" && place.zone !== "정문") {
+          return { matched: false, biz };
+        }
+      } else if (place.zone !== f.zone) {
+        return { matched: false, biz };
+      }
     }
 
     // 5) 밥·사리 리필 칩
@@ -1610,8 +1619,8 @@ const REPORT_FORM_URL = "";
         f.visitDayMode === "today" ? "오늘" : `${kst.weekdayKor}요일`;
       list.push({ key: "visitTime", label: `⏰ ${dayTxt} ${hhmm}` });
     }
-    if (f.openOnly) {
-      list.push({ key: "openOnly", label: "🟢 영업 중만" });
+    if (!f.openOnly) {
+      list.push({ key: "openOnly", label: "영업종료 포함" });
     }
     if (f.bookmarkedOnly) {
       list.push({ key: "bookmarkedOnly", label: "❤️ 찜한 곳" });
@@ -1669,7 +1678,7 @@ const REPORT_FORM_URL = "";
       f.visitTimeMode = "now";
       f.visitDayMode = "today";
     } else if (descriptorKey === "openOnly") {
-      f.openOnly = false;
+      f.openOnly = true;
     } else if (descriptorKey === "bookmarkedOnly") {
       f.bookmarkedOnly = false;
     } else if (descriptorKey === "survivalCard") {
@@ -2046,27 +2055,46 @@ const REPORT_FORM_URL = "";
      ========================================================================== */
 
   /**
-   * 캠퍼스별 권역 빠른 칩 렌더링
+   * 캠퍼스별 권역 드롭다운 선택창 렌더링 (#zonePopoverOptions & #chipZoneSelect)
    */
   function renderZoneQuickChips() {
-    const container = document.getElementById("zoneChipsInline");
-    if (!container) return;
-
     const cfg = CAMPUS_ANCHORS[state.currentCampus] || CAMPUS_ANCHORS.seoul;
-    container.innerHTML = cfg.zoneOptions
-      .map((opt) => {
-        const isActive = state.filters.zone === opt.zone;
-        return `
-          <button
-            type="button"
-            class="qchip zone-chip${isActive ? " is-active" : ""}"
-            data-zone="${escapeHtml(opt.zone)}"
-          >
-            ${escapeHtml(opt.label)}
-          </button>
-        `;
-      })
-      .join("");
+    const zspTitleEl = document.getElementById("zspTitle");
+    if (zspTitleEl) {
+      zspTitleEl.textContent = `${cfg.label} 권역 선택`;
+    }
+
+    const activeOpt =
+      cfg.zoneOptions.find((o) => o.zone === state.filters.zone) ||
+      cfg.zoneOptions[0];
+
+    const chipBtn = document.getElementById("chipZoneSelect");
+    const chipLbl = document.getElementById("chipZoneSelectLabel");
+    if (chipBtn) {
+      chipBtn.classList.toggle("is-active", state.filters.zone !== "all");
+    }
+    if (chipLbl && activeOpt) {
+      chipLbl.textContent = `${activeOpt.label} ▾`;
+    }
+
+    const popGrid = document.getElementById("zonePopoverOptions");
+    if (popGrid) {
+      popGrid.innerHTML = cfg.zoneOptions
+        .map((opt) => {
+          const isActive = state.filters.zone === opt.zone;
+          return `
+            <button
+              type="button"
+              class="zsp-option-btn${isActive ? " is-active" : ""}"
+              data-zone="${escapeHtml(opt.zone)}"
+            >
+              <strong>${escapeHtml(opt.label)}</strong>
+              <span>${escapeHtml(opt.desc || "")}</span>
+            </button>
+          `;
+        })
+        .join("");
+    }
   }
 
   /**
@@ -2130,11 +2158,24 @@ const REPORT_FORM_URL = "";
     const chipVisitTime = document.getElementById("chipVisitTime");
     const chipVisitTimeLabel = document.getElementById("chipVisitTimeLabel");
     if (chipVisitTime) {
-      chipVisitTime.classList.toggle("is-active", isVisitTimeSimulated());
+      chipVisitTime.classList.toggle(
+        "is-active",
+        f.openOnly || isVisitTimeSimulated()
+      );
+      const dotEl = chipVisitTime.querySelector(".qchip-dot");
+      if (dotEl) {
+        dotEl.classList.toggle("is-live", f.openOnly);
+        dotEl.hidden = !f.openOnly;
+      }
     }
     if (chipVisitTimeLabel) {
-      chipVisitTimeLabel.textContent = getVisitTimeDisplayLabel().replace(/^⏰\s*/, "");
+      chipVisitTimeLabel.textContent = getVisitTimeDisplayLabel();
     }
+
+    const vtpBtnOpenOnly = document.getElementById("vtpBtnOpenOnly");
+    const vtpBtnShowAll = document.getElementById("vtpBtnShowAll");
+    if (vtpBtnOpenOnly) vtpBtnOpenOnly.classList.toggle("is-active", f.openOnly);
+    if (vtpBtnShowAll) vtpBtnShowAll.classList.toggle("is-active", !f.openOnly);
 
     // 지갑 사정(예산) 칩 & 떠 있는 요정 버튼 & 모달 상태 동기화
     const chipWallet = document.getElementById("chipWalletBudget");
@@ -3014,6 +3055,7 @@ const REPORT_FORM_URL = "";
       // 필터에 가려져 있었다면 필터를 풀고 표시
       if (!state.sortedCampusPlaces.some((e) => String(e.place.id) === idStr)) {
         state.filters = createDefaultFilters();
+        state.filters.openOnly = false;
         refreshCampusView({ rebuildMarkers: true, resetScroll: false });
       }
       targetPlace = anyPlace;
@@ -3125,7 +3167,27 @@ const REPORT_FORM_URL = "";
 
     if (decoratedPlaces.length === 0) {
       listEl.innerHTML = "";
-      if (emptyEl) emptyEl.hidden = false;
+      if (emptyEl) {
+        emptyEl.hidden = false;
+        const emptyTitle = emptyEl.querySelector(".empty-title");
+        const emptyDesc = emptyEl.querySelector(".empty-desc");
+        const emptyBtn = document.getElementById("emptyResetBtn");
+        if (state.filters.openOnly && !state.filters.query) {
+          if (emptyTitle) emptyTitle.textContent = "현재 시각 영업 중인 식당이 없어요";
+          if (emptyDesc) {
+            emptyDesc.textContent =
+              "이른 아침·심야이거나 브레이크타임일 수 있어요. 전체 식당을 확인해 보세요!";
+          }
+          if (emptyBtn) emptyBtn.textContent = "영업종료 포함 전체 식당 보기";
+        } else {
+          if (emptyTitle) emptyTitle.textContent = "조건에 맞는 식당이 없어요";
+          if (emptyDesc) {
+            emptyDesc.textContent =
+              "지갑 사정(예산)을 조금 넓히거나 필터를 초기화해 보세요.";
+          }
+          if (emptyBtn) emptyBtn.textContent = "필터 초기화";
+        }
+      }
       return;
     }
 
@@ -3401,11 +3463,26 @@ const REPORT_FORM_URL = "";
      팝오버 · 맞춤필터 모달 · ☰ 메뉴 모달 · 제보 모달 제어
      ========================================================================== */
 
+  function toggleZoneSelectPopover(forceOpen) {
+    const pop = document.getElementById("zoneSelectPopover");
+    const chip = document.getElementById("chipZoneSelect");
+    if (!pop) return;
+    const willOpen = forceOpen !== undefined ? forceOpen : pop.hidden;
+    if (willOpen) closeVisitTimePopover();
+    pop.hidden = !willOpen;
+    if (chip) chip.setAttribute("aria-expanded", String(willOpen));
+  }
+
+  function closeZoneSelectPopover() {
+    toggleZoneSelectPopover(false);
+  }
+
   function toggleVisitTimePopover(forceOpen) {
     const pop = document.getElementById("visitTimePopover");
     const chip = document.getElementById("chipVisitTime");
     if (!pop) return;
     const willOpen = forceOpen !== undefined ? forceOpen : pop.hidden;
+    if (willOpen) closeZoneSelectPopover();
     pop.hidden = !willOpen;
     if (chip) chip.setAttribute("aria-expanded", String(willOpen));
   }
@@ -3526,6 +3603,7 @@ const REPORT_FORM_URL = "";
 
   function openMenuModal() {
     closeVisitTimePopover();
+    closeZoneSelectPopover();
     closeFilterModal();
     closeReportModal();
     updateMenuModalStats();
@@ -3617,6 +3695,7 @@ const REPORT_FORM_URL = "";
   function openReportModal(options = {}) {
     const { tab = "modify", place = null } = options;
     closeVisitTimePopover();
+    closeZoneSelectPopover();
     closeMenuModal();
     closeFilterModal();
 
@@ -4012,9 +4091,11 @@ const REPORT_FORM_URL = "";
       center: initialCampus.center,
       zoom: initialCampus.zoom,
       zoomControl: false,
+      doubleClickZoom: true,
       minZoom: 11,
       maxZoom: 19,
     });
+    map.doubleClickZoom.enable();
 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
@@ -4026,10 +4107,21 @@ const REPORT_FORM_URL = "";
     state.radiusLayer = L.layerGroup().addTo(map);
     state.markerLayer = L.layerGroup().addTo(map);
 
+    let singleClickTimer = null;
     map.on("click", () => {
       closeVisitTimePopover();
-      if (state.selectedPlaceId !== null) {
-        clearPlaceSelection();
+      closeZoneSelectPopover();
+      if (singleClickTimer) clearTimeout(singleClickTimer);
+      singleClickTimer = setTimeout(() => {
+        if (state.selectedPlaceId !== null) {
+          clearPlaceSelection();
+        }
+      }, 210);
+    });
+    map.on("dblclick", () => {
+      if (singleClickTimer) {
+        clearTimeout(singleClickTimer);
+        singleClickTimer = null;
       }
     });
 
@@ -4098,6 +4190,43 @@ const REPORT_FORM_URL = "";
       });
     }
 
+    // 권역 드롭다운 선택창 (#chipZoneSelect & #zoneSelectPopover)
+    const chipZoneSelect = document.getElementById("chipZoneSelect");
+    const zspCloseBtn = document.getElementById("zspCloseBtn");
+    const zonePopoverOptions = document.getElementById("zonePopoverOptions");
+
+    if (chipZoneSelect) {
+      chipZoneSelect.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleZoneSelectPopover();
+      });
+    }
+    if (zspCloseBtn) {
+      zspCloseBtn.addEventListener("click", closeZoneSelectPopover);
+    }
+    if (zonePopoverOptions) {
+      zonePopoverOptions.addEventListener("click", (e) => {
+        const zBtn = e.target.closest("[data-zone]");
+        if (!zBtn) return;
+        const targetZone = zBtn.getAttribute("data-zone") || "all";
+        state.filters.zone = targetZone;
+        closeZoneSelectPopover();
+        refreshCampusView({ rebuildMarkers: true, resetScroll: true });
+
+        if (state.map) {
+          const cfg = CAMPUS_ANCHORS[state.currentCampus];
+          if (targetZone === "all") {
+            state.map.flyTo(cfg.center, cfg.zoom, { duration: 0.65 });
+          } else {
+            const zAnchor = cfg.anchors[targetZone];
+            if (zAnchor) {
+              state.map.flyTo([zAnchor.lat, zAnchor.lng], 16, { duration: 0.65 });
+            }
+          }
+        }
+      });
+    }
+
     const chipVisitTime = document.getElementById("chipVisitTime");
     if (chipVisitTime) {
       chipVisitTime.addEventListener("click", (e) => {
@@ -4110,6 +4239,15 @@ const REPORT_FORM_URL = "";
     if (vtpCloseBtn) {
       vtpCloseBtn.addEventListener("click", closeVisitTimePopover);
     }
+
+    // 시간대 팝오버 내 [영업 중인 곳만] vs [영업종료 포함 전체] 토글
+    document.querySelectorAll("[data-open-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const mode = btn.getAttribute("data-open-mode");
+        state.filters.openOnly = mode === "open";
+        refreshCampusView({ rebuildMarkers: true, resetScroll: true });
+      });
+    });
 
     document.querySelectorAll(".vtp-day-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -4682,11 +4820,16 @@ const REPORT_FORM_URL = "";
       });
     }
 
-    // 빈 상태 0건 안내 박스 내 [필터 전체 초기화] 원터치 버튼
+    // 빈 상태 0건 안내 박스 내 원터치 버튼 (심야/새벽 영업 0건일 때는 전체 식당 보기로 전환!)
     const emptyResetBtn = document.getElementById("emptyResetBtn");
     if (emptyResetBtn) {
       emptyResetBtn.addEventListener("click", () => {
-        resetAllFilters({ flyToCampusCenter: true });
+        if (state.filters.openOnly && !state.filters.query) {
+          state.filters.openOnly = false;
+          refreshCampusView({ rebuildMarkers: true, resetScroll: true });
+        } else {
+          resetAllFilters({ flyToCampusCenter: true });
+        }
       });
     }
 
@@ -4789,6 +4932,7 @@ const REPORT_FORM_URL = "";
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape") {
         closeVisitTimePopover();
+        closeZoneSelectPopover();
         closeWalletModal();
         closeFilterModal();
         closeMenuModal();
